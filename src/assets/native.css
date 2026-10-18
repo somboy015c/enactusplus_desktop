@@ -1,0 +1,130 @@
+/* =========================================================================
+   EnactusNG Plus – native layer (splash, onboarding, app-like look & feel)
+   Loaded after plus.css; only active inside the installed apps (html.native)
+   ========================================================================= */
+:root{--spring:cubic-bezier(.34,1.56,.64,1);--ease:cubic-bezier(.2,.8,.2,1);--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 8px 24px -14px rgba(16,24,40,.16)}
+html.native,html.native body{overscroll-behavior:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;cursor:default}
+html.native input,html.native textarea,html.native [contenteditable],html.native .post-body,html.native .text,html.native .mail-body,html.native .sel{-webkit-user-select:text;user-select:text}
+html.native a,html.native img{-webkit-user-drag:none;user-drag:none}
+html.native{scroll-behavior:auto}
+html.native body{background:#F4F5F8}
+
+/* hide everything that points to the website or to app downloads */
+html.native .app-dl,html.native .app-menu,html.native .dl-card,html.native .auth-links a[href^="http"]{display:none!important}
+
+/* ---------- boot overlay: splash + onboarding ---------- */
+#boot{position:fixed;inset:0;z-index:9999;background:#FFFBF0;transition:opacity .6s var(--ease),visibility 0s .6s}
+#boot.gone{opacity:0;visibility:hidden;pointer-events:none}
+.b-screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;visibility:hidden;
+  transform:scale(1.03);transition:opacity .55s var(--ease),transform .55s var(--ease),visibility 0s .55s}
+.b-screen.show{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+#b-splash{overflow:hidden;background:#FFFBF0}
+#b-splash .bg{position:absolute;inset:-4%;background:#FFFBF0 url(img/splash-bg.jpg) center/cover no-repeat;opacity:0;animation:bIn 1.2s .1s var(--ease) forwards,bKen 16s linear infinite alternate}
+#b-splash .center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:30px}
+#b-splash h1{margin:0;font-size:1.75rem;font-weight:800;color:#18202C;letter-spacing:.01em;opacity:0;transform:translateY(14px);animation:bRise .8s .5s var(--ease) forwards}
+#b-splash h1 b{color:#ED341C}
+#b-splash p{margin:-20px 0 0;color:#667085;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem;font-weight:700;opacity:0;animation:bRise .8s .75s var(--ease) forwards}
+#b-splash .bar{position:absolute;z-index:2;left:50%;bottom:calc(46px + var(--sab));width:110px;height:4px;margin-left:-55px;border-radius:4px;background:rgba(24,32,44,.08);overflow:hidden}
+#b-splash .bar i{display:block;height:100%;width:40%;border-radius:4px;background:linear-gradient(90deg,#FFC11F,#ED341C);animation:bBar 1.3s var(--ease) infinite}
+@keyframes bIn{to{opacity:1}}@keyframes bRise{to{opacity:1;transform:none}}
+@keyframes bKen{from{transform:scale(1)}to{transform:scale(1.1) translate(-1%,1%)}}
+@keyframes bBar{0%{transform:translateX(-110%)}100%{transform:translateX(300%)}}
+/* the exact spinner used on the web */
+.b-spinner{position:relative;width:132px;height:134px}
+.b-spinner .cssload-loader{position:relative;width:100%;height:100%}
+.b-spinner svg.static{position:absolute;top:50%;left:50%;width:60%;height:auto;transform:translate(-50%,-50%)}
+.b-spinner svg.spin{position:absolute;top:50%;left:50%;width:104%;height:auto;transform:translate(-50%,-50%) rotate(0deg);animation:bSpin 1.4s linear infinite;transform-origin:center}
+@keyframes bSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.b-spinner svg.spin{animation:none}#b-splash .bg{animation:bIn 1s forwards}}
+
+#b-onb{justify-content:flex-start;background:radial-gradient(ellipse at 50% -10%,#FFE7A3 0%,#FFFBF0 55%);padding-top:var(--sat)}
+#b-onb .top{width:100%;max-width:560px;display:flex;justify-content:space-between;align-items:center;padding:14px 18px 0;min-height:62px}
+#b-onb .mini{display:flex;align-items:center;gap:10px;font-weight:800;color:#18202C}
+#b-onb .mini img{width:32px;height:32px}
+#b-vp{flex:1;width:100%;max-width:560px;overflow:hidden;touch-action:pan-y;position:relative}
+#b-track{display:flex;height:100%;transition:transform .55s var(--ease);will-change:transform}
+#b-track.drag{transition:none}
+.b-slide{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;text-align:center}
+.b-art{width:min(300px,62vw);aspect-ratio:1;margin-bottom:26px}.b-art svg{width:100%;height:100%;overflow:visible}
+.b-slide h2{margin:0 0 12px;font-size:1.7rem;line-height:1.2;font-weight:800;color:#18202C}
+.b-slide p{margin:0;color:#667085;line-height:1.6;font-size:1.02rem;max-width:420px}
+.b-slide .b-art,.b-slide h2,.b-slide p{opacity:0;transform:translateY(22px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.b-slide.active .b-art{opacity:1;transform:none;transition-delay:.05s}.b-slide.active h2{opacity:1;transform:none;transition-delay:.18s}.b-slide.active p{opacity:1;transform:none;transition-delay:.3s}
+#b-onb .bottom{width:100%;max-width:560px;padding:10px 24px calc(26px + var(--sab));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.b-dots{display:flex;gap:8px;align-items:center}
+.b-dot{height:8px;width:8px;border-radius:8px;background:rgba(24,32,44,.15);transition:width .45s var(--spring),background .3s}
+.b-dot.active{width:30px;background:linear-gradient(90deg,#FFC11F,#ED341C)}
+.b-btn{position:relative;overflow:hidden;border:0;outline:0;cursor:pointer;font:inherit;font-weight:800;letter-spacing:.01em;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 30px;border-radius:999px;transition:transform .25s var(--spring),box-shadow .25s var(--ease)}
+.b-btn:active{transform:scale(.94)}
+.b-btn.primary{min-width:150px;color:#2A1700;background:linear-gradient(135deg,#FFD24D,#FFC11F 55%,#FFB300);box-shadow:0 12px 26px -10px rgba(255,176,0,.95),inset 0 1px 0 rgba(255,255,255,.55)}
+.b-btn.primary:hover{transform:translateY(-2px)}
+.b-btn.primary::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);transform:skewX(-20deg);animation:bShine 3.2s 1.2s infinite}
+@keyframes bShine{0%{left:-70%}45%,100%{left:140%}}
+.b-btn.ghost{background:transparent;color:#667085;padding:0 18px;height:44px}.b-btn.ghost:hover{background:rgba(24,32,44,.06);color:#18202C}
+.b-btn svg{width:20px;height:20px;transition:transform .3s var(--spring)}.b-btn:hover svg{transform:translateX(4px)}
+.rip{position:absolute;border-radius:50%;pointer-events:none;background:rgba(255,255,255,.55);transform:scale(0);animation:bRip .65s var(--ease) forwards}
+.b-btn.ghost .rip,.ripple-host .rip.dark{background:rgba(24,32,44,.12)}
+@keyframes bRip{to{transform:scale(1);opacity:0}}
+.ripple-host{position:relative;overflow:hidden}
+/* illustrations */
+.f1{animation:bFloat 4.6s ease-in-out infinite}.f2{animation:bFloat 4.6s -1.4s ease-in-out infinite}.f3{animation:bFloat 4.6s -2.7s ease-in-out infinite}
+@keyframes bFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.b-pop{transform-box:fill-box;transform-origin:center;animation:bPop 2.4s var(--ease) infinite}
+@keyframes bPop{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.b-orbit{transform-origin:120px 120px;animation:bOrbit 16s linear infinite}.b-orbit .cn{transform-box:fill-box;transform-origin:center;animation:bOrbit 16s linear infinite reverse}
+@keyframes bOrbit{to{transform:rotate(360deg)}}
+.b-draw{stroke-dasharray:90;stroke-dashoffset:90}.b-slide.active .b-draw{animation:bDraw 1.2s .7s var(--ease) forwards}
+@keyframes bDraw{to{stroke-dashoffset:0}}
+
+/* ---------- app look & feel ---------- */
+html.native .btn{min-height:46px;font-weight:800;letter-spacing:.005em;transition:transform .22s var(--spring),box-shadow .22s var(--ease),background-color .2s,filter .2s}
+html.native .btn:active{transform:scale(.95)}
+html.native .btn-sm{min-height:36px}
+html.native .btn-primary{background:linear-gradient(135deg,#FFD24D,#FFC11F 55%,#FFB300);box-shadow:0 10px 22px -12px rgba(255,176,0,1),inset 0 1px 0 rgba(255,255,255,.5)}
+html.native .btn-primary::before{content:"";position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.6),transparent);transform:skewX(-20deg);animation:bShine 3.6s 1.5s infinite;pointer-events:none}
+html.native .btn{position:relative;overflow:hidden}
+html.native .btn-ghost{border-width:1.5px;background:#fff}
+html.native .icon-btn:active,html.native .avatar:active{transform:scale(.9)}
+html.native .icon-btn{transition:transform .2s var(--spring),background-color .2s}
+html.native .card,html.native .post,html.native .composer,html.native .side-card,html.native .widget,html.native .form-card{border-radius:22px;box-shadow:var(--shadow)}
+html.native .post,html.native a.card,html.native .person,html.native .event,html.native .project{transition:transform .2s var(--spring),box-shadow .2s}
+html.native input:not([type=checkbox]):not([type=radio]):not([type=file]),html.native textarea,html.native select{border-radius:14px;background:#F2F4F7;border:1.5px solid transparent;transition:border-color .2s,background-color .2s,box-shadow .2s}
+html.native input:focus,html.native textarea:focus,html.native select:focus{background:#fff;border-color:#FFC11F;box-shadow:0 0 0 4px rgba(255,193,31,.22);outline:0}
+html.native :focus-visible{outline:0}
+html.native .pill-tabs{scrollbar-width:none}html.native .pill-tabs::-webkit-scrollbar{display:none}
+html.native .pill-tabs button{transition:background-color .25s,color .25s,transform .2s var(--spring)}html.native .pill-tabs button:active{transform:scale(.94)}
+html.native .pill-tabs .on{background:linear-gradient(135deg,#24303F,#18202C);box-shadow:0 8px 16px -10px rgba(24,32,44,.8)}
+html.native .post-actions button:active,html.native .post-actions a:active{transform:scale(.9)}
+html.native .post-actions button,html.native .post-actions a{transition:transform .2s var(--spring),background-color .2s,color .2s}
+html.native .post-actions .liked svg{animation:bPopOnce .45s var(--spring)}
+@keyframes bPopOnce{0%{transform:scale(.6)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+/* page entrance */
+html.native .main-col>*{animation:nIn .5s var(--ease) both}
+html.native .main-col>*:nth-child(2){animation-delay:.05s}html.native .main-col>*:nth-child(3){animation-delay:.1s}html.native .main-col>*:nth-child(4){animation-delay:.15s}html.native .main-col>*:nth-child(n+5){animation-delay:.2s}
+@keyframes nIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+html.native .toast-wrap{bottom:calc(92px + var(--sab))}
+
+/* mobile: floating bottom bar, large touch targets, safe areas */
+@media (max-width:860px){
+  html.native .app-top{padding-top:var(--sat);background:rgba(255,255,255,.88);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);box-shadow:0 1px 0 rgba(16,24,40,.06)}
+  html.native .app-top-in{height:56px}
+  html.native .app-body,html.native .app-body.no-right{padding:14px 12px calc(100px + var(--sab))}
+  html.native .bottom-nav{left:12px;right:12px;bottom:calc(10px + var(--sab));border-radius:28px;border:0;padding:6px;background:rgba(255,255,255,.92);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);box-shadow:0 14px 34px -10px rgba(16,24,40,.32),0 0 0 1px rgba(16,24,40,.05)}
+  html.native .bn{border-radius:22px;padding:8px 2px 6px;transition:background-color .3s,color .3s,transform .25s var(--spring)}
+  html.native .bn:active{transform:scale(.9)}
+  html.native .bn svg{transition:transform .35s var(--spring)}
+  html.native .bn.on{background:#FFF1C9;color:#7A4E00}
+  html.native .bn.on svg{transform:translateY(-1px) scale(1.12)}
+  html.native .auth-panel{padding-bottom:calc(28px + var(--sab))}
+}
+/* desktop: calmer chrome, thin scrollbars */
+@media (min-width:861px){
+  html.native .app-top{background:rgba(255,255,255,.8);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px)}
+  html.native .side-link{transition:background-color .2s,transform .2s var(--spring)}html.native .side-link:active{transform:scale(.97)}
+  html.native .side-link.on{background:linear-gradient(135deg,#FFF1C9,#FFE7A3)}
+  html.native ::-webkit-scrollbar{width:10px;height:10px}
+  html.native ::-webkit-scrollbar-thumb{background:rgba(24,32,44,.18);border-radius:10px;border:3px solid transparent;background-clip:content-box}
+  html.native ::-webkit-scrollbar-thumb:hover{background:rgba(24,32,44,.32);background-clip:content-box;border:3px solid transparent}
+}
+html.native .pill-tabs{padding-bottom:12px;margin-bottom:2px}
