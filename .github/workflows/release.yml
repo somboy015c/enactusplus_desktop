@@ -1,0 +1,102 @@
+name: Build EnactusNG Plus desktop apps and publish release
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plus-desktop-release
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows
+            bundles: nsis
+            extra: ""
+          - os: macos-latest
+            artifact: macos
+            bundles: dmg
+            extra: "--target universal-apple-darwin"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install tools
+        run: npm install
+
+      - name: Set the dashboard address
+        run: node scripts/prepare.mjs src/assets/config.js
+        env:
+          PLUS_URL: ${{ vars.PLUS_URL }}
+
+      - name: Generate app icons
+        run: npx tauri icon app-icon.png
+
+      - name: Build
+        run: npx tauri build --bundles ${{ matrix.bundles }} ${{ matrix.extra }}
+
+      - name: Collect installer
+        shell: bash
+        run: |
+          mkdir -p out
+          if [ "${{ matrix.artifact }}" = "windows" ]; then
+            f=$(find src-tauri/target -path '*bundle/nsis/*' -name '*.exe' | head -n 1)
+            cp "$f" out/EnactusNGPlus.exe
+          else
+            f=$(find src-tauri/target -path '*bundle/dmg/*' -name '*.dmg' | head -n 1)
+            cp "$f" out/EnactusNGPlus.dmg
+          fi
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<'NOTES'
+          ## EnactusNG Plus – desktop apps
+          - **EnactusNGPlus.exe** – Windows 10/11 installer (no admin rights needed)
+          - **EnactusNGPlus.dmg** – macOS (Apple Silicon + Intel)
+
+          **macOS first launch:** if macOS says the app is "damaged" or from an unidentified developer, right-click the app → *Open*, or run `xattr -cr /Applications/EnactusNGPlus.app` once in Terminal.
+          **Windows:** if SmartScreen appears, click *More info* → *Run anyway*.
+          NOTES
+          gh release create "v1.0.${{ github.run_number }}" out/* \
+            --repo "${{ github.repository }}" \
+            --title "EnactusNG Plus Desktop v1.0.${{ github.run_number }}" \
+            --notes-file notes.md
