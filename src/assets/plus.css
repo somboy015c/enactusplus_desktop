@@ -239,7 +239,7 @@ body.app{background:var(--bg)}
 .icon-btn svg{width:21px;height:21px}
 .app-body{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr) 310px;gap:20px;padding:20px clamp(10px,2vw,20px) 40px;align-items:start}
 .app-body.no-right{grid-template-columns:250px minmax(0,1fr)}
-.side-col,.right-col{position:sticky;top:80px;display:grid;gap:14px}
+.side-col,.right-col{position:sticky;top:88px;display:grid;gap:14px}
 .side-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:10px}
 .side-me{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;color:var(--ink);text-decoration:none!important}
 .side-me:hover{background:var(--line-soft)}.side-me strong{display:block;line-height:1.2}.side-me small{color:var(--muted)}
@@ -518,13 +518,13 @@ body.app{background:var(--bg)}
   .chat-head .btn{flex:none}
   .chat-log{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 10px;background:#EFE9DD}
   .chat-form{flex:none;position:relative;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
-  .chat-shell:not(.has-room){height:calc(100dvh - 60px - 12px - 90px);min-height:380px;border-radius:14px}
+  .chat-shell:not(.has-room){height:calc(100dvh - 62px - 12px - 90px);min-height:380px;border-radius:14px}
   .chat-room{padding:12px 14px;border-bottom:1px solid var(--line-soft)}
   .chat-room .avatar{width:48px;height:48px}
   .msg .bubble{max-width:82vw}
 
   /* mail: Gmail-style – list with a hamburger drawer, every message / compose in its own full screen, floating write button */
-  .mail-wrap{display:block;position:relative;height:calc(100dvh - 60px - 12px - 90px);min-height:380px}
+  .mail-wrap{display:block;position:relative;height:calc(100dvh - 62px - 12px - 90px);min-height:380px}
   .mail-side{position:fixed;top:0;bottom:0;left:0;width:80%;max-width:310px;background:#fff;z-index:100;transform:translateX(-105%);transition:transform .22s ease;padding:calc(18px + env(safe-area-inset-top)) 14px 18px;box-shadow:6px 0 24px rgba(0,0,0,.2);overflow-y:auto}
   .mail-wrap.drawer-open .mail-side{transform:none}
   .mail-side .block{display:none}
@@ -534,6 +534,7 @@ body.app{background:var(--bg)}
   .mail-main{display:block;height:100%;min-height:0;border:0;border-radius:0;background:transparent;overflow:visible}
   .mail-listcol{height:100%;border:0;background:#fff;border-radius:14px;overflow:hidden}
   .mail-bar{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px 0}
+  .mail-bar>button:first-child{flex:none}
   .mail-menu{width:42px;height:42px;border-radius:50%;font-size:1.3rem;background:var(--line-soft)}
   .mail-title{font-size:1.1rem}
   .mail-main.has-open .mail-listcol{display:none}
@@ -713,3 +714,186 @@ body.app{background:var(--bg)}
 .dl-ic svg{width:24px;height:24px}
 .mini-spin{width:22px;height:22px;border-width:3px}
 .mail-atts a.att{padding:6px 8px 6px 14px}
+
+
+/* ===== v24: compact search rows, mail search icon, hub tabs, profile title ===== */
+.hub-nav,.tabs-bar,.pill-tabs{scrollbar-width:none;-ms-overflow-style:none}
+.hub-nav::-webkit-scrollbar,.tabs-bar::-webkit-scrollbar,.pill-tabs::-webkit-scrollbar{display:none;height:0}
+.tabs-bar{padding-bottom:0}
+.ms-wrap{display:none}
+@media (max-width:860px){
+  /* search + filters on one row: the filters become two icons inside the search bar */
+  .search-row:has(select){display:block;position:relative}
+  .search-row:has(select) input{width:100%;padding-right:52px}
+  .search-row:has(select:nth-of-type(2)) input{padding-right:96px}
+  .search-row select{position:absolute;top:50%;margin-top:-17px;right:6px;width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:50%;
+    -webkit-appearance:none;appearance:none;color:transparent;font-size:16px;cursor:pointer;background:var(--line-soft) center/19px no-repeat}
+  .search-row select:nth-of-type(1){background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%235b4a1c%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%205h18l-7%208v6l-4%202v-8z%27/%3E%3C/svg%3E")}
+  .search-row select:nth-of-type(2){background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%235b4a1c%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M7%204v16M3%2016l4%204%204-4M17%2020V4M13%208l4-4%204%204%27/%3E%3C/svg%3E");right:6px}
+  .search-row select:nth-of-type(2) ~ select{display:none}
+  .search-row:has(select:nth-of-type(2)) select:nth-of-type(1){right:46px}
+  .search-row select option{color:#14110A}
+  .search-row select.is-set{background-color:var(--brand);box-shadow:0 0 0 2px rgba(255,193,31,.35)}
+
+  /* mail: search is an icon in the top row that grows to the left */
+  .mail-listcol .mail-search{display:none}
+  .ms-wrap{display:flex;align-items:center;margin-left:auto;flex:0 0 42px;min-width:0;height:42px;border-radius:999px;background:var(--line-soft);overflow:hidden;transition:flex-basis .28s ease}
+  .ms-wrap.open{flex:1 1 auto;margin-left:10px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--brand)}
+  .ms-btn{flex:none;width:42px;height:42px;display:grid;place-items:center;color:var(--ink)}
+  .ms-btn svg{width:21px;height:21px}
+  .ms-wrap input{flex:1 1 0;min-width:0;width:0;min-height:0;height:42px;border:0;box-shadow:none;background:transparent;padding:0;font-size:16px;opacity:0;pointer-events:none}
+  .ms-wrap.open input{width:auto;padding:0 0 0 14px;opacity:1;pointer-events:auto}
+  .ms-wrap input:focus{box-shadow:none;border:0}
+  .mail-title{flex:none;white-space:nowrap;transition:opacity .2s}
+  .profile-top h1{font-size:1.15rem;line-height:1.25;overflow-wrap:anywhere}
+  .profile-top .muted{font-size:.85rem}
+}
+
+/* ===== v25: Team hub & Staff hub – mobile layout ===== */
+body.hub .filters select.is-set{border-color:var(--brand)}
+@media (max-width:860px){
+  body.hub{overflow-x:hidden}
+  .hub-bar{padding:8px 12px;gap:8px}
+  .hub-brand{font-size:.98rem;min-width:0}.hub-brand span{white-space:nowrap}
+  .hub-right{gap:8px;flex:none}
+  .hub-right .btn-ghost{min-height:36px;padding:0 12px;font-size:.78rem}
+  .hub-nav{padding:0 10px 8px;gap:4px}
+  .hub-nav a{padding:7px 13px;font-size:.84rem}
+  .hub-main{padding:14px 12px 48px}
+  .hub-title{font-size:1.3rem;margin-bottom:12px}
+  body.hub .card{padding:16px;margin-bottom:14px;border-radius:16px}
+  body.hub .card.flush{padding:0}
+  body.hub .card.flush>div[style*="padding"]{padding:12px 12px 0!important}
+  body.hub .card.flush>div[style*="padding"] h2{font-size:1.05rem}
+  body.hub .card h2{font-size:1.08rem}
+  body.hub .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  body.hub .stat{padding:14px}.stat strong{font-size:1.5rem}
+  body.hub .field input,body.hub .field select,body.hub .field textarea,body.hub .pop-form input,body.hub .pop-form select{font-size:16px}
+  body.hub .btn{min-height:44px}
+  body.hub .btn-sm{min-height:40px;padding:0 16px}
+  body.hub .form-actions{gap:8px}.form-actions .btn{flex:1 1 140px}
+  body.hub .check-grid{grid-template-columns:minmax(0,1fr)}
+  body.hub .pager{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+
+  /* page header: intro text, then the action buttons in a tidy grid */
+  body.hub .page-actions{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:12px}
+  body.hub .page-actions>span:empty{display:none}
+  body.hub .page-actions>div,body.hub .page-actions .btn-row{display:flex;flex-wrap:wrap;gap:8px}
+  body.hub .page-actions>div>.btn,body.hub .page-actions .btn-row>.btn,body.hub .page-actions>.btn,body.hub .page-actions>div>form{flex:1 1 calc(50% - 8px);min-width:0}
+  body.hub .page-actions>div>form .btn{width:100%}
+  body.hub .page-actions .btn.btn-primary{flex:1 1 100%;order:-1}
+  body.hub .page-actions>div>.btn.btn-primary,body.hub .page-actions>.btn.btn-primary{flex:1 1 100%}
+
+  /* search + filters: one row, selects become icon buttons */
+  body.hub .filters{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;width:100%}
+  body.hub .filters input[type=search],body.hub .filters input[type=text]{flex:1 1 auto;min-width:0;width:auto;min-height:44px;font-size:16px}
+  body.hub .filters select{flex:none;width:44px;height:44px;min-height:0;padding:0;border:0;border-radius:50%;-webkit-appearance:none;appearance:none;color:transparent;font-size:16px;cursor:pointer;
+    background:var(--line-soft) center/20px no-repeat;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%235b4a1c%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M3%205h18l-7%208v6l-4%202v-8z%27/%3E%3C/svg%3E")}
+  body.hub .filters select:nth-of-type(2){background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%235b4a1c%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M7%204v16M3%2016l4%204%204-4M17%2020V4M13%208l4-4%204%204%27/%3E%3C/svg%3E")}
+  body.hub .filters select option{color:#14110A}
+  body.hub .filters select.is-set{background-color:var(--brand);box-shadow:0 0 0 2px rgba(255,193,31,.35)}
+  body.hub .filters .btn{flex:none;width:44px;height:44px;min-height:0;padding:0;font-size:0;border-radius:50%;border:0;background:var(--brand) center/20px no-repeat;
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%232a1700%27%20stroke-width%3D%272.2%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M11%204a7%207%200%20100%2014%207%207%200%20000-14zM21%2021l-4.3-4.3%27/%3E%3C/svg%3E")}
+  body.hub .filters{margin-bottom:10px}
+
+  /* bulk bar (select all / change status / apply) */
+  body.hub .bulkbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 12px;background:#fff;border-radius:14px;box-shadow:var(--shadow)}
+  body.hub .bulkbar>.muted{grid-column:1/-1;font-size:.78rem;line-height:1.35}
+  body.hub .bulkbar select{min-height:40px;width:100%;min-width:0;font-size:14px;padding:0 8px}
+  body.hub .bulkbar .btn{min-height:40px}
+
+  /* tables become cards */
+  body.hub .table-scroll{overflow:visible}
+  body.hub table.data tr{position:relative;padding:14px 14px 12px;border-top:1px solid var(--line-soft)}
+  body.hub table.data tr:first-child{border-top:0}
+  body.hub table.data td{padding:4px 0;font-size:.9rem;align-items:center}
+  body.hub table.data td::before{flex:none}
+  body.hub table.data td:first-child[data-label],body.hub table.data td:first-child:not([data-label])+td[data-label]{display:block;text-align:left;padding:0 38px 6px 0;font-size:.98rem}
+  body.hub table.data td:first-child[data-label]::before,body.hub table.data td:first-child:not([data-label])+td[data-label]::before{display:none}
+  body.hub table.data td:first-child:not([data-label]){position:absolute;top:12px;right:12px;width:auto;padding:0}
+  body.hub table.data td input[type=checkbox]{width:22px;height:22px;accent-color:var(--brand-dark)}
+  body.hub table.data td{flex-wrap:wrap}
+  body.hub table.data td[data-label]:empty{display:none}
+  body.hub table.data td:has(.badge+.badge){justify-content:flex-start}
+  body.hub .actions-cell{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-top:8px;padding-top:10px!important;border-top:1px dashed var(--line);text-align:center}
+  body.hub .actions-cell>*{margin:0;min-width:0}
+  body.hub .actions-cell .btn,body.hub .actions-cell form,body.hub .actions-cell form .btn{width:100%}
+  body.hub .actions-cell .btn-quiet{background:var(--line-soft)}
+
+  /* lists with small actions (group members, requests) */
+  body.hub .timeline li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+  body.hub .timeline li small{flex:1 0 100%}
+  body.hub .timeline .row-actions{margin:4px 0 0;flex:1 0 100%;display:flex}
+  body.hub .timeline .row-actions form{display:flex;flex-wrap:wrap;gap:8px}
+  body.hub .linklike.small{padding:7px 14px;border-radius:999px;background:var(--line-soft);text-decoration:none;font-weight:600;color:var(--ink);font-size:.82rem}
+  body.hub .timeline li>form.inline{margin-left:auto}
+
+  /* groups (chat) inside the hub: a normal page, not the full-screen app view */
+  body.hub .chat-shell,body.hub .chat-shell:not(.has-room){position:static;height:calc(100dvh - 176px);min-height:420px;border-radius:16px;box-shadow:var(--shadow)}
+  body.hub .chat-shell.has-room{position:static;inset:auto;z-index:auto;height:calc(100dvh - 176px);min-height:420px;border-radius:16px;box-shadow:var(--shadow);background:#fff}
+  body.hub .chat-shell:not(.has-room){height:auto;min-height:0}
+  body.hub .chat-head{padding-top:10px;flex-wrap:wrap}
+  body.hub .chat-head .btn{min-height:36px}
+  body.hub .chat-rooms-head{padding:12px}
+  body.hub .chat-form{padding-bottom:10px}
+  body.hub .chat-form textarea{font-size:16px}
+  body.hub .chat-log{background:#F7F8FA}
+
+  body.hub .pop-form{width:100%}
+  body.hub .back{margin-bottom:10px}
+  body.hub .grid-2>*{min-width:0}
+}
+@media (max-width:560px){.hub-right .hide-sm{display:none}}
+@media (max-width:340px){.hub-brand span{display:none}}
+
+.field input[type=checkbox],.field input[type=radio],.check-inline input{width:auto;flex:none;min-height:0}
+
+/* reminders */
+.rem-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.rem-item{padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.rem-item.is-due{border-color:#f3b4ad;background:#fff7f6}
+.rem-item.is-done{background:var(--paper,#faf7f0)}
+.rem-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.rem-head strong{font-size:1rem;line-height:1.35;overflow-wrap:anywhere}
+.rem-badges{display:flex;gap:6px;flex:none}
+.rem-notes{margin:8px 0 0;color:var(--muted);font-size:.9rem;line-height:1.5;overflow-wrap:anywhere}
+.rem-meta{margin:8px 0 0;font-size:.78rem;color:var(--muted)}
+.rem-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.rem-actions form{display:inline-flex;margin:0}
+.card h2+form,.card h2+.rem-list{margin-top:14px}
+
+/* ===== v27: bigger EnactusNG Plus logo ===== */
+.app-top-in{height:68px}
+.app-brand img{height:48px;max-width:240px;object-fit:contain}
+.nav-btn{height:68px}
+.auth-box .logo{height:64px;max-width:100%;object-fit:contain;margin-bottom:28px}
+.auth-brand .brand-logo{height:60px;max-width:280px}
+.hub-brand .mark{width:46px;height:46px}
+.hub-brand img.mark{border-radius:10px;background:transparent}
+@media (max-width:860px){
+  .app-top-in{height:62px}
+  .app-brand img{height:42px;max-width:200px}
+  .auth-box .logo{height:56px}
+  .auth-brand .brand-logo{height:50px}
+  .hub-brand .mark{width:42px;height:42px}
+}
+
+/* ===== v28: no app icon in download cards; post actions & composer fit narrow phones ===== */
+.app-dl img.app-ico,.app-dl .app-ico{display:none!important}
+.post-actions button,.post-actions a{white-space:nowrap;min-width:0}
+.post-actions>:nth-child(n+3){flex:0 0 46px}
+@media (max-width:560px){
+  .post-actions{gap:2px;padding:4px 6px 8px;margin:0 4px}
+  .post-actions button,.post-actions a{gap:5px;padding:9px 4px;font-size:.8rem}
+  .post-actions svg{width:19px;height:19px}
+  .composer{padding:12px}
+  .composer-bar{overflow:visible;gap:4px;flex-wrap:nowrap}
+  .composer-bar .spacer{flex:1 1 0;min-width:0}
+  .attach-btn{flex:0 1 auto;min-width:0;padding:7px 9px;gap:4px;font-size:.74rem;white-space:nowrap}
+  .attach-btn svg{width:17px;height:17px}
+  .composer-bar .btn{flex:none;padding:7px 16px;min-height:36px}
+}
+
+/* recruitment: conclude card */
+.conclude-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:1.5px solid var(--brand,#F2A93C)}
+.conclude-card>div:first-child{flex:1 1 280px;min-width:0}.conclude-card p{margin:4px 0 0}

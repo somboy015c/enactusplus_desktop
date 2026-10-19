@@ -6,7 +6,7 @@
   'use strict';
   var CFG = Object.assign({ api: 'api/index.php' }, window.PLUS_CONFIG || {});
   var root = document.getElementById('app');
-  var S = { token: '', user: null, pub: null, counts: { messages: 0, notifications: 0, requests: 0 }, timers: [], poll: null };
+  var S = { token: '', user: null, pub: null, counts: { messages: 0, notifications: 0, requests: 0, mail: 0, announcements: 0, projects: 0, jobs: 0, resources: 0, events: 0 }, timers: [], poll: null };
   try { S.token = localStorage.getItem('plus_token') || ''; } catch (e) { /* private mode */ }
 
   /* ---------------------------------------------------------------- helpers */
@@ -35,6 +35,7 @@
   var ICONS = {
     home: 'M3 11l9-8 9 8M5 10v10h14V10', people: 'M16 11a4 4 0 10-8 0 4 4 0 008 0zM4 21c0-4 4-6 8-6s8 2 8 6',
     group: 'M17 20v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1M10 11a4 4 0 100-8 4 4 0 000 8zM21 20v-1a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8',
+    search: 'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-4.3-4.3',
     chat: 'M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z', mail: 'M3 6h18v12H3zM3 7l9 7 9-7', download: 'M12 3v12M7 11l5 5 5-5M5 21h14', inbox: 'M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5', gift: 'M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 110-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 100-5C13 2 12 7 12 7z', megaphone: 'M3 11v3a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15 9a4 4 0 010 6M18 6a8 8 0 010 12', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0',
     brief: 'M3 8h18v12H3zM8 8V5h8v3M3 13h18', folder: 'M3 6h6l2 2h10v11H3z', cal: 'M4 7h16v13H4zM4 11h16M8 3v4M16 3v4',
     project: 'M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5', image: 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M9 9h.01', file: 'M7 3h8l4 4v14H7zM15 3v4h4M10 13h6M10 17h6',
@@ -164,7 +165,7 @@
     var list = dlList();
     if (!list.length) return null;
     var btns = list.map(function (d, i) { return h('a', { class: 'btn btn-sm dl-' + d.group + ' ' + (i === 0 ? 'btn-primary' : 'btn-ghost'), href: d.url, target: '_blank', rel: 'noopener noreferrer' }, dlIcon(d.kind), ' ' + d.label); });
-    return h('div', { class: 'app-dl' }, a.icon ? h('img', { class: 'app-ico', src: a.icon, alt: '' }) : null,
+    return h('div', { class: 'app-dl' },
       h('div', null, h('strong', { text: 'Get the ' + (a.name || 'mobile') + ' app' }), compact ? null : h('small', { text: 'Install it on your computer or phone for the best experience.' }), h('div', { class: 'dl-btns' }, btns)));
   }
   /* header button: a small menu with Windows, macOS and Android (and iPhone when set) */
@@ -258,32 +259,33 @@
   function menuLinks() { return S.user && S.user.mail_enabled ? LINKS.slice(0, 6).concat([MAIL_LINK], LINKS.slice(6)) : LINKS; }
   function countEl(key) { return h('em', { class: 'count', 'data-c': key, hidden: true }); }
   function paintCounts() {
-    var map = { connect: S.counts.requests, messages: S.counts.messages, notifications: S.counts.notifications };
+    var map = { connect: S.counts.requests, messages: S.counts.messages, notifications: S.counts.notifications, mail: S.counts.mail, announcements: S.counts.announcements, projects: S.counts.projects, jobs: S.counts.jobs, resources: S.counts.resources, events: S.counts.events, more: (S.counts.announcements || 0) + (S.counts.projects || 0) + (S.counts.jobs || 0) + (S.counts.resources || 0) + (S.counts.events || 0) };
     document.querySelectorAll('[data-c]').forEach(function (el) { var n = map[el.getAttribute('data-c')] || 0; el.textContent = n > 99 ? '99+' : n; el.hidden = !n; });
   }
   function refreshCounts() {
     if (!S.token) return;
-    api('unread').then(function (d) { if (d.ok) { S.counts = { messages: d.messages, notifications: d.notifications, requests: d.requests }; paintCounts(); } });
+    api('unread').then(function (d) { if (d.ok) { S.counts = { messages: d.messages, notifications: d.notifications, requests: d.requests, mail: d.mail || 0, announcements: d.announcements || 0, projects: (d.fresh || {}).projects || 0, jobs: (d.fresh || {}).jobs || 0, resources: (d.fresh || {}).resources || 0, events: (d.fresh || {}).events || 0 }; paintCounts(); } });
   }
+  function markSeen(sec) { S.counts[sec] = 0; paintCounts(); api('seen', { data: { section: sec } }); }
   function startPolling() { clearInterval(S.poll); S.poll = setInterval(function () { if (!document.hidden) refreshCounts(); }, 20000); refreshCounts(); }
 
   function shell(active, widgets) {
     var u = S.user, pub = S.pub || {};
-    var nav = [['/', 'home', 'Home', 'home', null], ['/projects', 'project', 'Projects', 'projects', null], ['/jobs', 'brief', 'Opportunities', 'jobs', null], ['/connect', 'people', 'Connect', 'connect', 'connect'], ['/messages', 'chat', 'Messages', 'messages', 'messages']];
-    if (u.mail_enabled) nav.push(['/mail', 'mail', 'Mail', 'mail', null]);
+    var nav = [['/', 'home', 'Home', 'home', null], ['/announcements', 'megaphone', 'Announcements', 'announcements', 'announcements'], ['/projects', 'project', 'Projects', 'projects', 'projects'], ['/jobs', 'brief', 'Opportunities', 'jobs', 'jobs'], ['/connect', 'people', 'Connect', 'connect', 'connect'], ['/messages', 'chat', 'Messages', 'messages', 'messages']];
+    if (u.mail_enabled) nav.push(['/mail', 'mail', 'Mail', 'mail', 'mail']);
     var top = h('header', { class: 'app-top' }, h('div', { class: 'app-top-in' },
       h('a', { class: 'app-brand', href: '#/', 'aria-label': 'EnactusNG Plus home' }, brandMark()),
       h('nav', { class: 'app-nav', 'aria-label': 'Main' }, nav.map(function (n) { return h('a', { class: 'nav-btn' + (active === n[3] ? ' on' : ''), href: '#' + n[0], 'aria-label': n[2], title: n[2] }, icon(n[1]), n[4] ? countEl(n[4]) : null); })),
       h('div', { class: 'app-right' }, appMenuButton(), h('a', { class: 'icon-btn', href: '#/notifications', 'aria-label': 'Notifications' }, icon('bell'), countEl('notifications')), h('a', { href: '#/me', 'aria-label': 'My profile' }, avatar(u)))));
     var side = h('aside', { class: 'side-col' },
       h('div', { class: 'side-card' }, h('a', { class: 'side-me', href: '#/me' }, avatar(u), h('span', null, h('strong', { text: u.name }), h('small', { text: u.kind_label + (u.team ? ' · ' + u.team : '') })))),
-      h('nav', { class: 'side-card', 'aria-label': 'Menu' }, menuLinks().map(function (l) { return h('a', { class: 'side-link' + (active === l[3] ? ' on' : ''), href: '#' + l[0] }, icon(l[1]), h('span', { text: l[2] }), l[3] === 'connect' ? countEl('connect') : (l[3] === 'messages' ? countEl('messages') : (l[3] === 'notifications' ? countEl('notifications') : null))); }),
+      h('nav', { class: 'side-card', 'aria-label': 'Menu' }, menuLinks().map(function (l) { return h('a', { class: 'side-link' + (active === l[3] ? ' on' : ''), href: '#' + l[0] }, icon(l[1]), h('span', { text: l[2] }), ['connect', 'messages', 'notifications', 'mail', 'announcements', 'projects', 'jobs', 'resources', 'events'].indexOf(l[3]) > -1 ? countEl(l[3]) : null); }),
         (u.is_team || u.is_staff) ? h('a', { class: 'side-link', href: '#/me', onclick: function (e) { e.preventDefault(); openHub(u.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } }, icon('hub'), h('span', { text: u.is_team ? 'Team hub' : 'Staff area' })) : null),
       appDownload(true));
     var main = h('main', { class: 'main-col', id: 'main' });
     var right = widgets ? h('aside', { class: 'right-col' }) : null;
-    var bn = [['/', 'home', 'Home', 'home', null], ['/connect', 'people', 'Connect', 'connect', 'connect'], ['/messages', 'chat', 'Chats', 'messages', 'messages'], ['/more', 'folder', 'More', 'more', null]];
-    if (u.mail_enabled) bn.splice(3, 0, ['/mail', 'mail', 'Mail', 'mail', null]);
+    var bn = [['/', 'home', 'Home', 'home', null], ['/connect', 'people', 'Connect', 'connect', 'connect'], ['/messages', 'chat', 'Chats', 'messages', 'messages'], ['/more', 'folder', 'More', 'more', 'more']];
+    if (u.mail_enabled) bn.splice(3, 0, ['/mail', 'mail', 'Mail', 'mail', 'mail']);
     var bottom = h('nav', { class: 'bottom-nav', 'aria-label': 'Main' }, bn.map(function (n) { return h('a', { class: 'bn' + (active === n[3] ? ' on' : ''), href: '#' + n[0] }, icon(n[1]), h('span', { text: n[2] }), n[4] ? countEl(n[4]) : null); }));
     clear(root);
     root.appendChild(top); root.appendChild(h('div', { class: 'app-body' + (right ? '' : ' no-right') }, side, main, right)); root.appendChild(bottom);
@@ -824,6 +826,7 @@
 
   /* ---------------------------------------------------------------- projects */
   function viewProjects() {
+    markSeen('projects');
     var main = shell('projects', false), u = S.user;
     main.appendChild(h('div', { class: 'page-h' }, h('h1', { text: 'Projects' }),
       u.is_team ? h('div', { style: 'display:flex;gap:8px' }, h('button', { class: 'btn btn-primary btn-sm', type: 'button', text: '+ Register a project', onclick: function () { openHub('p=t_project'); } }), h('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'My team’s projects', onclick: function () { openHub('p=t_projects'); } })) : null));
@@ -883,6 +886,7 @@
 
   /* ---------------------------------------------------------------- opportunities, resources, events */
   function viewJobs() {
+    markSeen('jobs');
     var main = shell('jobs', false), tab = 'jobs', info = { can_post: false, can_talent: false };
     main.appendChild(h('div', { class: 'page-h' }, h('h1', { text: 'Opportunities' })));
     var tabs = h('div', { class: 'pill-tabs' }), body = h('div'); main.appendChild(tabs); main.appendChild(body);
@@ -934,6 +938,7 @@
   }
   var RES_LABELS = { registration: 'Official registration links', guideline: 'Guidelines & challenges', training: 'Training materials', tool: 'Project-building tools', link: 'Useful links' };
   function viewResources() {
+    markSeen('resources');
     var main = shell('resources', false);
     main.appendChild(h('div', { class: 'page-h' }, h('h1', { text: 'Resources' })));
     var box = h('div'); main.appendChild(box); box.appendChild(h('div', { class: 'spinner' }));
@@ -953,6 +958,7 @@
     });
   }
   function viewEvents() {
+    markSeen('events');
     var main = shell('events', false);
     main.appendChild(h('div', { class: 'page-h' }, h('h1', { text: 'Events' })));
     var box = h('div'); main.appendChild(box); box.appendChild(h('div', { class: 'spinner' }));
@@ -1178,6 +1184,7 @@
       clear(pane); showPane(); pane.appendChild(h('div', { class: 'spinner' }));
       var isDraft = S2.folder === 'drafts';
       api('mail/message', { params: { id: m.id, edit: isDraft ? 1 : 0 } }).then(function (d) {
+        refreshCounts();
         clear(pane);
         if (!d.ok) { if (!fail(d)) pane.appendChild(h('div', { class: 'card', text: d.error })); return; }
         var x = d.message; m.read = true;
@@ -1264,7 +1271,14 @@
     }
     paintFolders(); emptyPane();
     var menuBtn = h('button', { class: 'mail-menu', type: 'button', 'aria-label': 'Mail folders', text: '☰', onclick: function () { wrap.classList.toggle('drawer-open'); } });
-    main.appendChild(h('div', { class: 'mail-listcol' }, h('div', { class: 'mail-bar' }, menuBtn, titleEl), h('div', { class: 'search-row' }, search), list));
+    var msInput = h('input', { type: 'search', placeholder: 'Search mail…', 'aria-label': 'Search mail', enterkeyhint: 'search' }), msWrap = h('div', { class: 'ms-wrap' });
+    var msBtn = h('button', { class: 'ms-btn', type: 'button', 'aria-label': 'Search mail', title: 'Search mail' }, icon('search'));
+    msInput.addEventListener('input', function () { search.value = msInput.value; search.dispatchEvent(new Event('input', { bubbles: true })); });
+    function msOpen(on) { msWrap.classList.toggle('open', on); titleEl.classList.toggle('ms-shrunk', on); if (on) { setTimeout(function () { msInput.focus(); }, 60); } else if (msInput.value) { msInput.value = ''; msInput.dispatchEvent(new Event('input')); } }
+    msBtn.addEventListener('click', function () { msOpen(!msWrap.classList.contains('open')); });
+    msInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') msOpen(false); });
+    msWrap.appendChild(msInput); msWrap.appendChild(msBtn);
+    main.appendChild(h('div', { class: 'mail-listcol' }, h('div', { class: 'mail-bar' }, menuBtn, titleEl, msWrap), h('div', { class: 'search-row mail-search' }, search), list));
     main.appendChild(pane);
     wrap.appendChild(h('div', { class: 'mail-side' }, compose, h('div', { style: 'height:12px' }), folders)); wrap.appendChild(main);
     wrap.appendChild(h('div', { class: 'mail-backdrop', onclick: function () { wrap.classList.remove('drawer-open'); } }));
@@ -1300,6 +1314,7 @@
       if (!S.greeted) { S.greeted = true; setTimeout(birthdayGreeting, 600); }
     });
   }
+  document.addEventListener('change', function (e) { var t = e.target; if (t && t.matches && t.matches('.search-row select')) t.classList.toggle('is-set', t.value !== ''); });
   window.addEventListener('hashchange', navigate);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token) refreshCounts(); });
   api('public').then(function (d) {

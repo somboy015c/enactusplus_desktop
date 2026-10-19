@@ -89,8 +89,8 @@ html.native .icon-btn:active,html.native .avatar:active{transform:scale(.9)}
 html.native .icon-btn{transition:transform .2s var(--spring),background-color .2s}
 html.native .card,html.native .post,html.native .composer,html.native .side-card,html.native .widget,html.native .form-card{border-radius:22px;box-shadow:var(--shadow)}
 html.native .post,html.native a.card,html.native .person,html.native .event,html.native .project{transition:transform .2s var(--spring),box-shadow .2s}
-html.native input:not([type=checkbox]):not([type=radio]):not([type=file]),html.native textarea,html.native select{border-radius:14px;background:#F2F4F7;border:1.5px solid transparent;transition:border-color .2s,background-color .2s,box-shadow .2s}
-html.native input:focus,html.native textarea:focus,html.native select:focus{background:#fff;border-color:#FFC11F;box-shadow:0 0 0 4px rgba(255,193,31,.22);outline:0}
+html.native input:not([type=checkbox]):not([type=radio]):not([type=file]),html.native textarea{border-radius:14px;background-color:#F2F4F7;border:1.5px solid transparent;transition:border-color .2s,background-color .2s,box-shadow .2s}
+html.native input:focus,html.native textarea:focus{background-color:#fff;border-color:#FFC11F;box-shadow:0 0 0 4px rgba(255,193,31,.22);outline:0}
 html.native :focus-visible{outline:0}
 html.native .pill-tabs{scrollbar-width:none}html.native .pill-tabs::-webkit-scrollbar{display:none}
 html.native .pill-tabs button{transition:background-color .25s,color .25s,transform .2s var(--spring)}html.native .pill-tabs button:active{transform:scale(.94)}
