@@ -22,6 +22,7 @@ html.native .app-dl,html.native .app-menu,html.native .dl-card,html.native .auth
 #b-splash{overflow:hidden;background:#FFFBF0}
 #b-splash .bg{position:absolute;inset:-4%;background:#FFFBF0 url(img/splash-bg.jpg) center/cover no-repeat;opacity:0;animation:bIn 1.2s .1s var(--ease) forwards,bKen 16s linear infinite alternate}
 #b-splash .center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:30px}
+#b-splash .b-logo{width:min(260px,64vw);height:auto;opacity:0;transform:translateY(14px);animation:bRise .8s .5s var(--ease) forwards}
 #b-splash h1{margin:0;font-size:1.75rem;font-weight:800;color:#18202C;letter-spacing:.01em;opacity:0;transform:translateY(14px);animation:bRise .8s .5s var(--ease) forwards}
 #b-splash h1 b{color:#ED341C}
 #b-splash p{margin:-20px 0 0;color:#667085;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem;font-weight:700;opacity:0;animation:bRise .8s .75s var(--ease) forwards}
@@ -64,9 +65,10 @@ html.native .app-dl,html.native .app-menu,html.native .dl-card,html.native .auth
 .b-btn.ghost{background:transparent;color:#667085;padding:0 18px;height:44px}.b-btn.ghost:hover{background:rgba(24,32,44,.06);color:#18202C}
 .b-btn svg{width:20px;height:20px;transition:transform .3s var(--spring)}.b-btn:hover svg{transform:translateX(4px)}
 .rip{position:absolute;border-radius:50%;pointer-events:none;background:rgba(255,255,255,.55);transform:scale(0);animation:bRip .65s var(--ease) forwards}
-.b-btn.ghost .rip,.ripple-host .rip.dark{background:rgba(24,32,44,.12)}
+.b-btn.ghost .rip,.rip.dark{background:rgba(24,32,44,.12)}
 @keyframes bRip{to{transform:scale(1);opacity:0}}
-.ripple-host{position:relative;overflow:hidden}
+.ripple-host{position:relative}
+.rip-wrap{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:0}
 /* illustrations */
 .f1{animation:bFloat 4.6s ease-in-out infinite}.f2{animation:bFloat 4.6s -1.4s ease-in-out infinite}.f3{animation:bFloat 4.6s -2.7s ease-in-out infinite}
 @keyframes bFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
@@ -128,3 +130,19 @@ html.native .toast-wrap{bottom:calc(92px + var(--sab))}
   html.native ::-webkit-scrollbar-thumb:hover{background:rgba(24,32,44,.32);background-clip:content-box;border:3px solid transparent}
 }
 html.native .pill-tabs{padding-bottom:12px;margin-bottom:2px}
+
+/* onboarding photos coming from the server */
+.b-art.photo{width:min(340px,80vw);aspect-ratio:4/3.2}
+.b-photo{width:100%;height:100%;object-fit:cover;border-radius:28px;box-shadow:0 24px 44px -24px rgba(24,32,44,.6);background:#FFF1C9}
+#b-onb .mini img{border-radius:8px}
+/* keep text readable & selectable where people copy things; stop mobile text inflation */
+html.native{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html.native :is(p,.bubble,.text,.post-body,.mail-body,.comment-text,.meta){-webkit-user-select:text;user-select:text}
+/* keyboard open: tuck the bottom bar away instead of floating over the keyboard */
+html.native .bottom-nav{transition:transform .3s var(--ease),opacity .2s}
+html.native.kb .bottom-nav{transform:translateY(140%);opacity:0;pointer-events:none}
+html.native.kb .app-body{padding-bottom:20px}
+/* offline banner */
+#net-banner{position:fixed;left:50%;top:calc(var(--sat) + 10px);transform:translate(-50%,-160%);z-index:9000;display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:#18202C;color:#fff;font-weight:700;font-size:.85rem;box-shadow:0 12px 28px -10px rgba(0,0,0,.5);transition:transform .45s var(--spring);max-width:92vw}
+#net-banner.show{transform:translate(-50%,0)}
+#net-banner i{width:9px;height:9px;border-radius:50%;background:#FFC11F;animation:bPop 1.2s infinite}

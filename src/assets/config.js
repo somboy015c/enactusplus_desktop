@@ -1,1 +1,1 @@
-window.PLUS_CONFIG = { api: "api/index.php" };
+window.PLUS_CONFIG = { api: "https://plus.enactus.org.ng/api/index.php" };

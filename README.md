@@ -18,3 +18,7 @@ It only adds the desktop app to the list of allowed apps (CORS). The Android app
 - Splash background: `src/assets/img/splash-bg.jpg` (same file name). Colours and buttons: `src/assets/native.css`.
 - Welcome slides: `src/index.html` (search for `b-slide`).
 - The timeline, chat, projects etc. are your own `src/assets/app.js` and `plus.css`; when you update them on the website, copy the new files here.
+
+## Icon, logo and welcome slides
+- The app icon, splash and logo were made from your uploaded Plus favicon and logo. To change them replace `app-icon.png` and `src/assets/img/logo.png` / `favicon.png`.
+- The 3 welcome slides load **live from your server** (Site settings → EnactusNG Plus → sign-in slides: picture, headline, text), so changing them on the website changes the app. If the phone is offline on first launch, built-in illustrations are shown instead.

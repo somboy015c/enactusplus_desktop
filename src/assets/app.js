@@ -43,6 +43,15 @@
     trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3', logout: 'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9',
     plus: 'M12 5v14M5 12h14', edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4', hub: 'M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6', user: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6'
   };
+  ICONS.refresh = 'M20 11a8 8 0 10-2.3 5.7M20 4v7h-7';
+  ICONS.eye = 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z';
+  ICONS.pin = 'M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11zM12 12a2 2 0 100-4 2 2 0 000 4z';
+  ICONS.link = 'M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1';
+  ICONS.flag = 'M5 21V4h11l-1.5 4L16 12H5';
+  ICONS.cap = 'M2 9l10-5 10 5-10 5zM6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5';
+  ICONS.tool = 'M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z';
+  ICONS.clock = 'M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+  ICONS.out = 'M7 17L17 7M8 7h9v9';
   function icon(name) {
     var i = document.createElement('i');
     i.className = 'ic';
@@ -98,11 +107,20 @@
     return fetch(url, init)
       .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'Unexpected response from the server.' }; }).then(function (d) { d.status = r.status; return d; }); })
       .then(function (d) {
+        if (init.method === 'GET' && route !== 'unread') { if (d.status === 0 || d.status >= 500 || d.error === 'Unexpected response from the server.') showReload(); else hideReload(); }
         if (d.status === 401 && S.token && route !== 'auth/login') { signOutLocal(); }
         else if (d.code === 'password_change' && location.hash.indexOf('#/welcome') !== 0) { location.hash = '#/welcome'; }
         return d;
       })
-      .catch(function () { return { ok: false, error: 'Network problem. Check your connection and try again.', status: 0 }; });
+      .catch(function () { var d = { ok: false, error: 'Network problem. Check your connection and try again.', status: 0 }; if (init.method === 'GET' && route !== 'unread') showReload(); return d; });
+  }
+  /* "Could not load" bar with a refresh button; hides itself after the next successful load */
+  function hideReload() { var b = document.querySelector('.reload-bar'); if (b) b.remove(); }
+  function showReload() {
+    if (document.querySelector('.reload-bar')) return;
+    var btn = h('button', { class: 'reload-btn', type: 'button', 'aria-label': 'Refresh the page', onclick: function () { hideReload(); if (typeof S.nav === 'function') S.nav(); } },
+      icon('refresh'), h('span', { text: 'Refresh' }));
+    document.body.appendChild(h('div', { class: 'reload-bar', role: 'alert' }, h('span', { text: 'This page did not load.' }), btn));
   }
   function setToken(t) { S.token = t || ''; try { if (t) localStorage.setItem('plus_token', t); else localStorage.removeItem('plus_token'); } catch (e) { /* ignore */ } }
   function signOutLocal() { setToken(''); S.user = null; clearInterval(S.poll); S.poll = null; location.hash = '#/login'; }
@@ -164,7 +182,7 @@
     var a = (S.pub && S.pub.app) || null;
     var list = dlList();
     if (!list.length) return null;
-    var btns = list.map(function (d, i) { return h('a', { class: 'btn btn-sm dl-' + d.group + ' ' + (i === 0 ? 'btn-primary' : 'btn-ghost'), href: d.url, target: '_blank', rel: 'noopener noreferrer' }, dlIcon(d.kind), ' ' + d.label); });
+    var btns = list.map(function (d, i) { return h('a', { class: 'btn btn-sm dl-' + d.group + ' ' + (i === 0 ? 'btn-primary' : 'btn-ghost'), href: d.url, target: '_self', onclick: function (e) { e.preventDefault(); window.location.href = d.url; } }, dlIcon(d.kind), ' ' + d.label); });
     return h('div', { class: 'app-dl' },
       h('div', null, h('strong', { text: 'Get the ' + (a.name || 'mobile') + ' app' }), compact ? null : h('small', { text: 'Install it on your computer or phone for the best experience.' }), h('div', { class: 'dl-btns' }, btns)));
   }
@@ -173,7 +191,7 @@
     var list = dlList();
     if (!list.length) return null;
     var pop = h('div', { class: 'app-pop', hidden: true, role: 'menu' }, h('strong', { class: 'app-pop-h', text: 'Get the app' }), list.map(function (d) {
-      return h('a', { class: 'app-pop-i dl-' + d.group, role: 'menuitem', href: d.url, target: '_blank', rel: 'noopener noreferrer' }, dlIcon(d.kind), h('span', null, h('b', { text: d.label }), h('small', { text: d.note || '' })));
+      return h('a', { class: 'app-pop-i dl-' + d.group, role: 'menuitem', href: d.url, target: '_self', onclick: function (e) { e.preventDefault(); window.location.href = d.url; } }, dlIcon(d.kind), h('span', null, h('b', { text: d.label }), h('small', { text: d.note || '' })));
     }));
     var btn = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Get the app', title: 'Get the app', 'aria-haspopup': 'true' }, icon('download'));
     var box = h('div', { class: 'app-menu' }, btn, pop);
@@ -203,7 +221,7 @@
         setToken(d.token); S.user = d.user; startPolling();
         location.hash = d.user.must_change_password ? '#/welcome' : '#/';
       });
-    } }, err, h('div', { class: 'field' }, h('label', { for: 'l-email', text: 'Enactus ID or email' }), email, h('p', { class: 'help', text: 'Use your Enactus ID. Team representatives, partners, BAB members and faculty advisors sign in with their email.' })), pw.el, btn);
+    } }, err, h('div', { class: 'field' }, h('label', { for: 'l-email', text: 'Enactus ID or email' }), email), pw.el, btn);
     var pub = S.pub || {};
     authShell(h('div', { class: 'auth-box' }, pub.logo ? h('img', { class: 'logo', src: pub.logo, alt: (pub.app && pub.app.name) || pub.name || '' }) : null,
       h('h1', { text: 'Welcome back' }), h('p', { text: pub.tagline || 'Sign in to the Enactus Nigeria network.' }), form,
@@ -259,12 +277,12 @@
   function menuLinks() { return S.user && S.user.mail_enabled ? LINKS.slice(0, 6).concat([MAIL_LINK], LINKS.slice(6)) : LINKS; }
   function countEl(key) { return h('em', { class: 'count', 'data-c': key, hidden: true }); }
   function paintCounts() {
-    var map = { connect: S.counts.requests, messages: S.counts.messages, notifications: S.counts.notifications, mail: S.counts.mail, announcements: S.counts.announcements, projects: S.counts.projects, jobs: S.counts.jobs, resources: S.counts.resources, events: S.counts.events, more: (S.counts.announcements || 0) + (S.counts.projects || 0) + (S.counts.jobs || 0) + (S.counts.resources || 0) + (S.counts.events || 0) };
+    var map = { connect: S.counts.requests, messages: S.counts.messages, notifications: S.counts.notifications, mail: S.counts.mail, announcements: S.counts.announcements, approvals: S.counts.approvals, projects: S.counts.projects, jobs: S.counts.jobs, resources: S.counts.resources, events: S.counts.events, more: (S.counts.approvals || 0) + (S.counts.announcements || 0) + (S.counts.projects || 0) + (S.counts.jobs || 0) + (S.counts.resources || 0) + (S.counts.events || 0) };
     document.querySelectorAll('[data-c]').forEach(function (el) { var n = map[el.getAttribute('data-c')] || 0; el.textContent = n > 99 ? '99+' : n; el.hidden = !n; });
   }
   function refreshCounts() {
     if (!S.token) return;
-    api('unread').then(function (d) { if (d.ok) { S.counts = { messages: d.messages, notifications: d.notifications, requests: d.requests, mail: d.mail || 0, announcements: d.announcements || 0, projects: (d.fresh || {}).projects || 0, jobs: (d.fresh || {}).jobs || 0, resources: (d.fresh || {}).resources || 0, events: (d.fresh || {}).events || 0 }; paintCounts(); } });
+    api('unread').then(function (d) { if (d.ok) { S.counts = { messages: d.messages, notifications: d.notifications, requests: d.requests, mail: d.mail || 0, announcements: d.announcements || 0, approvals: d.approvals || 0, projects: (d.fresh || {}).projects || 0, jobs: (d.fresh || {}).jobs || 0, resources: (d.fresh || {}).resources || 0, events: (d.fresh || {}).events || 0 }; paintCounts(); } });
   }
   function markSeen(sec) { S.counts[sec] = 0; paintCounts(); api('seen', { data: { section: sec } }); }
   function startPolling() { clearInterval(S.poll); S.poll = setInterval(function () { if (!document.hidden) refreshCounts(); }, 20000); refreshCounts(); }
@@ -280,7 +298,7 @@
     var side = h('aside', { class: 'side-col' },
       h('div', { class: 'side-card' }, h('a', { class: 'side-me', href: '#/me' }, avatar(u), h('span', null, h('strong', { text: u.name }), h('small', { text: u.kind_label + (u.team ? ' · ' + u.team : '') })))),
       h('nav', { class: 'side-card', 'aria-label': 'Menu' }, menuLinks().map(function (l) { return h('a', { class: 'side-link' + (active === l[3] ? ' on' : ''), href: '#' + l[0] }, icon(l[1]), h('span', { text: l[2] }), ['connect', 'messages', 'notifications', 'mail', 'announcements', 'projects', 'jobs', 'resources', 'events'].indexOf(l[3]) > -1 ? countEl(l[3]) : null); }),
-        (u.is_team || u.is_staff) ? h('a', { class: 'side-link', href: '#/me', onclick: function (e) { e.preventDefault(); openHub(u.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } }, icon('hub'), h('span', { text: u.is_team ? 'Team hub' : 'Staff area' })) : null),
+        (u.is_team || u.is_staff) ? h('a', { class: 'side-link', href: '#/me', onclick: function (e) { e.preventDefault(); openHub(u.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } }, icon('hub'), h('span', { text: u.is_team ? 'Team hub' : 'Staff area' }), u.is_staff ? countEl('approvals') : null) : null),
       appDownload(true));
     var main = h('main', { class: 'main-col', id: 'main' });
     var right = widgets ? h('aside', { class: 'right-col' }) : null;
@@ -302,7 +320,7 @@
       var up = (d.events || []).filter(function (e) { return !e.past; }).slice(0, 3);
       evBox.lastChild.remove();
       if (!up.length) { evBox.appendChild(h('p', { class: 'muted small', text: 'Nothing scheduled yet.' })); }
-      up.forEach(function (e) { var dt = new Date(e.starts_at); evBox.appendChild(h('div', { class: 'mini' }, h('div', { class: 'ev-chip' }, h('span', { text: dt.getDate() }), h('small', { text: dt.toLocaleString(undefined, { month: 'short' }) })), h('div', { class: 'who' }, h('strong', { text: e.title }), h('small', { text: e.location || when(e.starts_at) })))); });
+      up.forEach(function (e) { var dt = new Date(e.starts_at); evBox.appendChild(h('a', { class: 'mini mini-ev', href: '#/events' }, calTile(dt, true), h('div', { class: 'who' }, h('strong', { text: e.title }), h('small', { text: e.location || when(e.starts_at) })))); });
       evBox.appendChild(h('a', { class: 'small', href: '#/events', text: 'All events →' }));
     });
     api('people', { params: { page: 1 } }).then(function (d) {
@@ -311,7 +329,7 @@
       if (!list.length) { pBox.appendChild(h('p', { class: 'muted small', text: 'You are connected with everyone here 🎉' })); }
       list.forEach(function (p) {
         var b = h('button', { class: 'btn btn-soft btn-sm', text: 'Connect', onclick: function () { connectTo(p, b); } });
-        pBox.appendChild(h('div', { class: 'mini' }, avatar(p, 'sm'), h('div', { class: 'who' }, h('strong', { text: p.name }), h('small', { text: p.headline || p.team || p.kind_label })), b));
+        pBox.appendChild(clickable(h('div', { class: 'mini' }, avatar(p, 'sm'), h('div', { class: 'who' }, h('strong', { text: p.name }), h('small', { text: p.headline || p.team || p.kind_label })), b), p));
       });
       pBox.appendChild(h('a', { class: 'small', href: '#/connect', text: 'Find more people →' }));
     });
@@ -319,8 +337,8 @@
   function viewMore() {
     var main = shell('more', false);
     main.appendChild(h('div', { class: 'page-h' }, h('h1', { text: 'More' })));
-    main.appendChild(h('div', { class: 'side-card' }, menuLinks().concat([['/me', 'user', 'My profile', 'me']]).map(function (l) { return h('a', { class: 'side-link', href: '#' + l[0] }, icon(l[1]), h('span', { text: l[2] })); }),
-      (S.user.is_team || S.user.is_staff) ? h('a', { class: 'side-link', href: '#/more', onclick: function (e) { e.preventDefault(); openHub(S.user.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } }, icon('hub'), h('span', { text: S.user.is_team ? 'Team hub' : 'Staff area' })) : null));
+    main.appendChild(h('div', { class: 'side-card' }, menuLinks().concat([['/me', 'user', 'My profile', 'me']]).map(function (l) { return h('a', { class: 'side-link', href: '#' + l[0] }, icon(l[1]), h('span', { text: l[2] }), ['connect', 'messages', 'notifications', 'mail', 'announcements', 'projects', 'jobs', 'resources', 'events'].indexOf(l[3]) > -1 ? countEl(l[3]) : null); }),
+      (S.user.is_team || S.user.is_staff) ? h('a', { class: 'side-link', href: '#/more', onclick: function (e) { e.preventDefault(); openHub(S.user.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } }, icon('hub'), h('span', { text: S.user.is_team ? 'Team hub' : 'Staff area' }), S.user.is_staff ? countEl('approvals') : null) : null));
     var dl = appDownload(false); if (dl) main.appendChild(dl);
   }
   function lightbox(src) {
@@ -341,9 +359,17 @@
   function messageUser(id) {
     api('dm', { data: { user: id } }).then(function (d) { if (d.ok) { location.hash = '#/messages/' + d.room_id; } else { toast(d.error || 'Could not open the conversation.', 'error'); } });
   }
+  /* ---- profiles: LinkedIn-style person and team pages; cards link to them ---- */
+  function profileHref(p) { return (p.kind === 'team' && p.team_id) ? '#/team/' + p.team_id : '#/u/' + p.id; }
+  function clickable(el, p) {
+    el.classList.add('is-link'); el.setAttribute('tabindex', '0'); el.setAttribute('role', 'link'); el.setAttribute('aria-label', 'Open ' + p.name + '’s profile');
+    el.addEventListener('click', function (e) { if (e.target.closest('button,a,input,select,textarea')) return; location.hash = profileHref(p); });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target === el) location.hash = profileHref(p); });
+    return el;
+  }
   function commentNode(c, onDelete) {
-    var n = h('div', { class: 'comment' }, avatar(c.author, 'sm'),
-      h('div', { class: 'bubble' }, h('strong', null, c.author.name, h('small', { text: ago(c.at) })), h('p', null, linkify(c.body)),
+    var n = h('div', { class: 'comment' }, h('a', { class: 'plink', href: profileHref(c.author), 'aria-label': c.author.name }, avatar(c.author, 'sm')),
+      h('div', { class: 'bubble' }, h('strong', null, h('a', { class: 'plink-name', href: profileHref(c.author), text: c.author.name }), h('small', { text: ago(c.at) })), h('p', null, linkify(c.body)),
         c.can_delete ? h('button', { class: 'linklike small', type: 'button', text: 'Delete', onclick: function () { api('comment/delete', { data: { id: c.id } }).then(function () { n.remove(); onDelete(); }); } }) : null));
     return n;
   }
@@ -381,11 +407,11 @@
     card.appendChild(h('div', { class: 'post-actions' }, likeBtn, comBtn, extraActions || null));
   }
   function authorHead(a, at, tag) {
-    return h('div', { class: 'post-head' }, avatar(a), h('div', { class: 'who' }, h('strong', { text: a.name }),
+    return h('div', { class: 'post-head' }, h('a', { class: 'plink', href: profileHref(a), 'aria-label': a.name }, avatar(a)), h('div', { class: 'who' }, h('strong', null, h('a', { class: 'plink-name', href: profileHref(a), text: a.name })),
       h('small', { text: [a.kind_label, a.team || a.organisation].filter(Boolean).join(' · ') + ' · ' + ago(at) })), tag || null);
   }
   function renderItem(it, onRemove) {
-    var u = S.user, card = h('article', { class: 'post', 'data-key': it.key });
+    var u = S.user, card = h('article', { class: 'post' + (it.kind === 'announcement' ? ' is-ann' : ''), 'data-key': it.key });
     if (it.type === 'post') {
       card.appendChild(authorHead(it.author, it.at, it.kind === 'announcement' ? h('a', { class: 'tag ann', href: '#/announcements', text: 'Announcement' }) : (it.pending ? h('span', { class: 'tag', text: 'Awaiting approval' }) : null)));
       if (it.body) card.appendChild(h('div', { class: 'post-body' }, linkify(it.body)));
@@ -438,7 +464,7 @@
     });
     paintChosen();
     return h('div', { class: 'composer' }, h('div', { class: 'composer-top' }, avatar(u), ta), chosen,
-      h('div', { class: 'composer-bar' }, u.can_attach ? [picker('Photos', 'image', 'image/*', imgs), picker('Documents', 'file', '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv', docs, 'Files')] : h('span', { class: 'muted small', text: 'Photos and documents are not enabled for your account.' }),
+      h('div', { class: 'composer-bar' }, u.can_attach ? [picker('Photos', 'image', 'image/*', imgs), picker('Documents', 'file', '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv', docs, 'Files')] : null,
         ann ? h('label', { class: 'attach-btn', title: 'Post as an announcement' }, ann, icon('megaphone'), h('span', { class: 'lbl', text: 'Announcement' }), h('span', { class: 'lbl-s', text: 'Notice' })) : null, h('span', { class: 'spacer' }), btn));
   }
 
@@ -483,10 +509,10 @@
     else btns.appendChild(h('span', { class: 'badge badge-green', text: 'Connected' }));
     btns.appendChild(h('button', { class: 'btn btn-ghost btn-sm msg-btn', type: 'button', text: 'Message', onclick: function () { messageUser(p.id); } }));
     if (p.kind === 'team') {
-      return h('article', { class: 'person is-team' }, h('div', { class: 'team-band' + (p.cover ? ' has-cover' : ''), style: p.cover ? 'background-image:url("' + String(p.cover).replace(/"/g, '%22') + '")' : '' }, h('span', { class: 'team-tag', text: 'TEAM' })),
-        h('div', { class: 'team-logo' }, avatar(p, 'lg')), h('div', { class: 'pbody' }, h('h3', { text: p.name }), p.headline ? h('span', { class: 'headline', text: p.headline }) : null, h('small', { class: 'muted', text: 'Enactus campus team' })), btns);
+      return clickable(h('article', { class: 'person is-team' }, h('div', { class: 'team-band' + (p.cover ? ' has-cover' : ''), style: p.cover ? 'background-image:url("' + String(p.cover).replace(/"/g, '%22') + '")' : '' }, h('span', { class: 'team-tag', text: 'TEAM' })),
+        h('div', { class: 'team-logo' }, avatar(p, 'lg')), h('div', { class: 'pbody' }, h('h3', { text: p.name }), p.headline ? h('span', { class: 'headline', text: p.headline }) : null, h('small', { class: 'muted', text: 'Enactus campus team' })), btns), p);
     }
-    return h('article', { class: 'person' }, avatar(p, 'lg'), h('div', { class: 'pbody' }, h('h3', { text: p.name }), h('small', { class: 'muted', text: p.kind_label }), p.headline ? h('span', { class: 'headline', text: p.headline }) : null, (p.team || p.organisation) ? h('small', { class: 'muted pteam', text: p.team || p.organisation }) : null), btns);
+    return clickable(h('article', { class: 'person' }, avatar(p, 'lg'), h('div', { class: 'pbody' }, h('h3', null, h('a', { class: 'plink-name', href: profileHref(p), text: p.name })), h('small', { class: 'muted', text: p.kind_label }), p.headline ? h('span', { class: 'headline', text: p.headline }) : null, (p.team || p.organisation) ? (p.team_id ? h('a', { class: 'muted pteam small', href: '#/team/' + p.team_id, text: p.team }) : h('small', { class: 'muted pteam', text: p.team || p.organisation })) : null), btns), p);
   }
   function connectTabs(active) {
     return h('div', { class: 'pill-tabs' }, [['', 'Discover'], ['requests', 'Requests'], ['friends', 'My connections']].map(function (t) {
@@ -499,7 +525,7 @@
     main.appendChild(connectTabs(sub)); paintCounts();
     if (sub === '') {
       var q = h('input', { type: 'search', placeholder: 'Search people by name or headline…', 'aria-label': 'Search people' });
-      var kind = h('select', { 'aria-label': 'Type' }, h('option', { value: '', text: 'Everyone' }), ['team:Team representatives', 'member:Members', 'alumni:Alumni', 'advisor:Academic advisors', 'partner:Partners', 'staff:Staff'].map(function (k) { var p = k.split(':'); return h('option', { value: p[0], text: p[1] }); }));
+      var kind = h('select', { 'aria-label': 'Type' }, h('option', { value: '', text: 'Everyone' }), ['team:Enactus Teams', 'member:Members', 'alumni:Alumni', 'advisor:Academic advisors', 'partner:Partners', 'staff:Staff'].filter(function (k) { var v = k.split(':')[0], me = S.user || {}; if (me.kind === 'partner') return v === 'staff'; if (v === 'partner') return !!me.is_admin; if (v === 'team') return !!me.is_staff; return true; }).map(function (k) { var p = k.split(':'); return h('option', { value: p[0], text: p[1] }); }));
       var team = h('select', { 'aria-label': 'Team' }, h('option', { value: '', text: 'All teams' }));
       var grid = h('div', { class: 'people-grid' }), more = h('div', { class: 'load-more' }); var page = 1, tmr = null, filled = false;
       main.appendChild(h('div', { class: 'search-row' }, q, kind, team)); main.appendChild(grid); main.appendChild(more);
@@ -523,7 +549,7 @@
       var render = function () {
         api('connections').then(function (d) {
           clear(box);
-          var rows = function (list, btnsFn) { return list.map(function (p) { return h('div', { class: 'row-card' }, avatar(p), h('div', { class: 'who' }, h('strong', { text: p.name }), h('small', { text: p.headline || p.team || p.kind_label })), h('div', { class: 'btns' }, btnsFn(p))); }); };
+          var rows = function (list, btnsFn) { return list.map(function (p) { return clickable(h('div', { class: 'row-card' }, avatar(p), h('div', { class: 'who' }, h('strong', { text: p.name }), h('small', { text: p.headline || p.team || p.kind_label })), h('div', { class: 'btns' }, btnsFn(p))), p); }); };
           var respond = function (p, action, btn) { busy(btn, true); api('connection/respond', { data: { id: p.connection_id, action: action } }).then(function (r) { busy(btn, false); if (r.ok) { refreshCounts(); render(); } else { toast(r.error, 'error'); } }); };
           if (sub === 'requests') {
             box.appendChild(h('h2', { class: 'sect-h', text: 'Requests for you' }));
@@ -765,7 +791,7 @@
       clear(pane); wrap.classList.add('has-room');
       var name = h('input', { type: 'text', maxlength: '120', required: true, placeholder: 'e.g. Team Leaders Group' }), desc = h('input', { type: 'text', maxlength: '255' });
       var posting = h('select', null, h('option', { value: 'everyone', text: 'Everyone in the channel' }), h('option', { value: 'admins', text: 'Admins only (announcements)' }));
-      var kinds = [['team', 'Team representatives'], ['member', 'Members'], ['alumni', 'Alumni'], ['advisor', 'Academic advisors'], ['partner', 'Partners'], ['staff', 'Staff']];
+      var kinds = [['team', 'Enactus Teams'], ['member', 'Members'], ['alumni', 'Alumni'], ['advisor', 'Academic advisors'], ['partner', 'Partners'], ['staff', 'Staff']];
       var boxes = kinds.map(function (k) { return h('label', { class: 'check-inline', style: 'display:flex' }, h('input', { type: 'checkbox', value: k[0] }), ' ' + k[1]); });
       var chImg = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif' });
       var btn = h('button', { class: 'btn btn-primary', type: 'submit', text: 'Create channel' });
@@ -789,8 +815,16 @@
         if (!d.ok) { clear(pane); pane.appendChild(h('div', { class: 'chat-empty' }, h('h2', { text: 'Conversation not found' }), h('a', { href: '#/messages', text: '← Back' }))); return; }
         var r = d.room; clear(head);
         head.appendChild(r.kind === 'dm' || r.photo ? avatar({ name: r.title, photo: r.photo }, 'sm') : h('span', { class: 'avatar sm hash', text: '#' }));
-        head.appendChild(h('div', { class: 't' }, h('h2', { text: r.title }), r.description ? h('small', { class: 'muted', text: r.description }) : null));
+        head.appendChild(h('div', { class: 't' }, r.dm ? h('h2', null, h('a', { class: 'plink-name', href: '#/u/' + r.dm.user.id, text: r.title })) : h('h2', { text: r.title }), r.description ? h('small', { class: 'muted', text: r.description }) : null));
         var acts = h('div', { class: 'chat-acts' });
+        if (r.dm) {
+          var blk = h('button', { class: 'btn btn-quiet btn-sm', type: 'button', text: r.dm.blocked_by_me ? 'Unblock' : 'Block' });
+          blk.addEventListener('click', function () {
+            if (!r.dm.blocked_by_me && !confirm('Block ' + r.title + '? Neither of you will be able to send or receive messages from the other.')) return;
+            busy(blk, true); api('block', { data: { user: r.dm.user.id, on: r.dm.blocked_by_me ? 0 : 1 } }).then(function (x) { busy(blk, false); if (x.ok) { toast(x.blocked ? 'Blocked.' : 'Unblocked.', 'ok'); openRoom(id); } else { toast(x.error || 'Could not do that.', 'error'); } });
+          });
+          acts.appendChild(blk);
+        }
         if (r.kind === 'circle') acts.appendChild(h('a', { class: 'btn btn-ghost btn-sm', href: '#/groups/' + r.id, text: 'Members' }));
         if (r.kind !== 'dm' && !r.staff_made && !r.is_creator) acts.appendChild(h('button', { class: 'btn btn-quiet report-btn', type: 'button', title: 'Report this group', 'aria-label': 'Report this group', text: '⚑ Report', onclick: function () { reportSheet(r.id, r.title); } }));
         if (r.kind === 'group' && r.is_admin) acts.appendChild(h('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Manage', onclick: function () { openHub('p=chat&a=manage&room=' + r.id); } }));
@@ -812,7 +846,7 @@
           ta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : sb.click(); } });
           ta.addEventListener('input', function () { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 130) + 'px'; });
           pane.appendChild(form);
-        } else { pane.appendChild(h('div', { class: 'chat-form muted small', text: '🔒 Only group admins can post in this channel.' })); }
+        } else { pane.appendChild(h('div', { class: 'chat-form muted small', text: '🔒 ' + (r.dm && r.dm.note ? r.dm.note : 'Only group admins can post in this channel.') })); }
         every(4000, function () {
           var stick = log.scrollHeight - log.scrollTop - log.clientHeight < 140;
           api('room', { params: { id: id, after: last } }).then(function (p) { if (p.ok && p.messages.length) { var ph = log.querySelector('p.muted'); if (ph) ph.remove(); p.messages.forEach(function (m) { add(m, stick); }); S.counts.messages = p.unread; paintCounts(); } });
@@ -868,7 +902,7 @@
         p.summary ? h('p', { style: 'margin-top:10px;font-weight:600;color:var(--ink)', text: p.summary }) : null,
         (p.body || '').split(/\n+/).filter(Boolean).map(function (t) { return h('p', { style: 'margin-top:10px', text: t }); }),
         p.impact ? h('p', { style: 'margin-top:10px' }, h('b', { text: 'Impact: ' }), p.impact) : null,
-        h('div', { class: 'stat-grid', style: 'margin:16px 0 0' }, [[p.hours, 'Volunteer hours'], [p.people.toLocaleString(), 'People reached'], ['₦' + Math.round(p.income).toLocaleString(), 'Income generated']].map(function (s) { return h('div', { class: 'stat' }, h('strong', { text: s[0] }), h('span', { text: s[1] })); })),
+        h('div', { class: 'stat-grid', style: 'margin:16px 0 0' }, [[p.hours.toLocaleString(), 'Volunteer hours', 'Total hours volunteers gave, all added together'], [p.people.toLocaleString(), 'People reached'], ['₦' + Math.round(p.income).toLocaleString(), 'Income generated']].map(function (s) { return h('div', { class: 'stat', title: s[2] || null }, h('strong', { text: s[0] }), h('span', { text: s[1] }), s[2] ? h('small', { class: 'stat-hint', text: s[2] }) : null); })),
         h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;margin-top:14px' },
           p.contact_id ? h('button', { class: 'btn btn-primary', type: 'button', text: 'Message the team', onclick: function () { messageUser(p.contact_id); } }) : null,
           p.own && S.user.is_team ? h('button', { class: 'btn btn-ghost', type: 'button', text: 'Edit in Team hub', onclick: function () { openHub('p=t_project&id=' + p.id); } }) : null,
@@ -916,7 +950,7 @@
             clear(grid); if (!d.ok) { toast(d.error, 'error'); return; }
             if (!d.talent.length) grid.appendChild(h('div', { class: 'card center', text: 'No one is listed yet. Members and alumni can switch on “Open to opportunities” in their profile.' }));
             d.talent.forEach(function (p) { grid.appendChild(h('article', { class: 'person' }, avatar(p, 'lg'), h('h3', { text: p.name }), h('small', { class: 'muted', text: p.kind_label + (p.class_of ? ' · Class of ' + p.class_of : '') }), p.headline ? h('span', { class: 'headline', text: p.headline }) : null, h('small', { class: 'muted', text: p.team || '' }), p.bio ? h('small', { text: p.bio }) : null,
-              h('div', { class: 'btns' }, h('button', { class: 'btn btn-primary btn-sm', type: 'button', text: 'Message', onclick: function () { messageUser(p.id); } }), p.linkedin ? h('a', { class: 'btn btn-ghost btn-sm', href: p.linkedin, target: '_blank', rel: 'noopener noreferrer', text: 'LinkedIn' }) : null))); });
+              h('div', { class: 'btns' }, S.user.kind === 'partner' ? null : h('button', { class: 'btn btn-primary btn-sm', type: 'button', text: 'Message', onclick: function () { messageUser(p.id); } }), p.linkedin ? h('a', { class: 'btn btn-ghost btn-sm', href: p.linkedin, target: '_blank', rel: 'noopener noreferrer', text: 'LinkedIn' }) : null))); });
           });
         }
         q.addEventListener('input', function () { clearTimeout(tmr); tmr = setTimeout(load, 350); });
@@ -936,6 +970,17 @@
     }
     paintTabs(); render();
   }
+  function calTile(dt, small) {
+    return h('div', { class: 'cal-tile' + (small ? ' sm' : '') }, h('div', { class: 'cal-mo' }, icon('cal'), h('span', { text: dt.toLocaleString(undefined, { month: 'short' }) })), h('div', { class: 'cal-day', text: String(dt.getDate()) }), small ? null : h('div', { class: 'cal-wd', text: dt.toLocaleString(undefined, { weekday: 'short' }) }));
+  }
+  var RES_ICON = { registration: 'file', guideline: 'flag', training: 'cap', tool: 'tool', link: 'link' };
+  var RES_SHORT = { registration: 'Registration', guideline: 'Guideline', training: 'Training', tool: 'Tool', link: 'Link' };
+  function resCard(r) {
+    var host = ''; try { host = new URL(r.url).hostname.replace(/^www\./, ''); } catch (e) { host = ''; }
+    return h('article', { class: 'res-card k-' + r.kind }, h('div', { class: 'res-top' }, h('span', { class: 'res-ico' }, icon(RES_ICON[r.kind] || 'link')), h('span', { class: 'res-kind', text: RES_SHORT[r.kind] || 'Resource' })),
+      h('h3', { text: r.title }), r.description ? h('p', { text: r.description }) : null,
+      r.url ? h('div', { class: 'res-foot' }, h('small', { class: 'res-host', text: host }), h('a', { class: 'btn btn-primary btn-sm', href: r.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open ', icon('out'))) : null);
+  }
   var RES_LABELS = { registration: 'Official registration links', guideline: 'Guidelines & challenges', training: 'Training materials', tool: 'Project-building tools', link: 'Useful links' };
   function viewResources() {
     markSeen('resources');
@@ -953,7 +998,7 @@
       Object.keys(RES_LABELS).forEach(function (k) {
         var list = d.resources.filter(function (r) { return r.kind === k; }); if (!list.length) return;
         box.appendChild(h('h2', { class: 'sect-h', text: RES_LABELS[k] }));
-        box.appendChild(h('div', { class: 'res-grid' }, list.map(function (r) { return h('div', { class: 'res' }, h('h3', { text: r.title }), r.description ? h('p', { text: r.description }) : null, r.url ? h('a', { class: 'btn btn-ghost btn-sm', href: r.url, target: '_blank', rel: 'noopener noreferrer', text: 'Open' }) : null); })));
+        box.appendChild(h('div', { class: 'res-grid' }, list.map(resCard)));
       });
     });
   }
@@ -964,8 +1009,10 @@
     var box = h('div'); main.appendChild(box); box.appendChild(h('div', { class: 'spinner' }));
     api('events').then(function (d) {
       clear(box);
-      function card(e) { var dt = new Date(e.starts_at); return h('div', { class: 'event' + (e.past ? ' past' : '') }, h('div', { class: 'ev-chip' }, h('span', { text: dt.getDate() }), h('small', { text: dt.toLocaleString(undefined, { month: 'short' }) })),
-        h('div', null, h('h3', { text: e.title }), h('small', { class: 'muted', text: when(e.starts_at) + (e.location ? ' · ' + e.location : '') }), e.description ? h('p', { style: 'margin-top:6px', text: e.description }) : null, e.link ? h('a', { class: 'btn btn-ghost btn-sm', style: 'margin-top:8px', href: e.link, target: '_blank', rel: 'noopener noreferrer', text: 'Details / register' }) : null)); }
+      function card(e) { var dt = new Date(e.starts_at); return h('article', { class: 'event-card' + (e.past ? ' past' : '') }, calTile(dt, false),
+        h('div', { class: 'ev-main' }, e.past ? h('span', { class: 'ev-state', text: 'Ended' }) : h('span', { class: 'ev-state up', text: 'Upcoming' }), h('h3', { text: e.title }),
+          h('div', { class: 'ev-meta' }, h('span', null, icon('clock'), ' ' + when(e.starts_at)), e.location ? h('span', null, icon('pin'), ' ' + e.location) : null),
+          e.description ? h('p', { text: e.description }) : null, e.link ? h('a', { class: 'btn btn-primary btn-sm', href: e.link, target: '_blank', rel: 'noopener noreferrer' }, 'Details / register ', icon('out')) : null)); }
       var up = d.events.filter(function (e) { return !e.past; }), past = d.events.filter(function (e) { return e.past; }).reverse();
       box.appendChild(h('h2', { class: 'sect-h', text: 'Upcoming' }));
       if (!up.length) box.appendChild(h('div', { class: 'card center', text: 'No upcoming events right now.' }));
@@ -986,7 +1033,7 @@
         if (!d.notifications.length) box.appendChild(h('div', { class: 'card center', text: 'You are all caught up 🎉' }));
         d.notifications.forEach(function (n) {
           box.appendChild(h('button', { type: 'button', class: 'notif' + (n.read ? '' : ' unread'), onclick: function () { api('notifications/read', { data: { ids: [n.id] } }).then(function () { refreshCounts(); if (n.link) location.hash = n.link; else render(); }); } },
-            h('span', { class: 'icon-btn' }, icon(n.type === 'comment' ? 'comment' : (n.type === 'invite' ? 'group' : (n.type === 'project' ? 'project' : (n.type === 'birthday' ? 'gift' : (n.type === 'announcement' ? 'megaphone' : 'people')))))), h('span', null, h('strong', { text: n.title }), n.body ? h('small', { text: n.body }) : null, h('small', { text: ago(n.at) }))));
+            h('span', { class: 'icon-btn' }, icon(n.type === 'comment' ? 'comment' : (n.type === 'invite' ? 'group' : ((n.type === 'project' || n.type === 'approval') ? 'project' : (n.type === 'birthday' ? 'gift' : (n.type === 'announcement' ? 'megaphone' : 'people')))))), h('span', null, h('strong', { text: n.title }), n.body ? h('small', { text: n.body }) : null, h('small', { text: ago(n.at) }))));
         });
       });
     }
@@ -1014,7 +1061,8 @@
     var f = { name: h('input', { type: 'text', maxlength: '150', value: u.name, required: true }), headline: h('input', { type: 'text', required: true, maxlength: '160', value: u.headline || '', placeholder: 'e.g. Agribusiness student · Team Lead' }),
       phone: h('input', { type: 'tel', required: true, maxlength: '40', value: u.phone || '' }), linkedin: h('input', { type: 'text', maxlength: '255', value: u.linkedin || '', placeholder: 'https://www.linkedin.com/in/…' }), bio: h('textarea', { rows: '4', required: true, maxlength: '1200' }), organisation: h('input', { type: 'text', maxlength: '160', value: u.organisation || '' }) };
     f.bio.value = u.bio || '';
-    var open = h('input', { type: 'checkbox', checked: u.open_to_work });
+    var open = h('input', { type: 'checkbox', checked: u.open_to_work !== false });
+    var dm = h('input', { type: 'checkbox', checked: u.accept_dm !== false });
     var dob = h('input', { type: 'date', value: u.date_of_birth || '', required: true, min: '1920-01-01', max: new Date(Date.now() - 10 * 31557600000).toISOString().slice(0, 10) });
     var photo = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/gif', required: !u.photo });
     var first = u.profile_complete === false;
@@ -1023,7 +1071,7 @@
     main.appendChild(h('div', { class: 'profile-top' }, avatar(u, 'xl'), h('div', null, h('h1', { text: u.name }), h('p', { class: 'muted', text: u.kind_label + (u.team ? ' · ' + u.team : '') + (u.member_code ? ' · ' + u.member_code : '') }))));
     main.appendChild(h('form', { class: 'form-card', onsubmit: function (e) {
       e.preventDefault(); busy(btn, true);
-      var data = { name: f.name.value, headline: f.headline.value, phone: f.phone.value, linkedin: f.linkedin.value, bio: f.bio.value, organisation: f.organisation.value, date_of_birth: dob.value, open_to_work: open.checked ? 1 : 0 };
+      var data = { name: f.name.value, headline: f.headline.value, phone: f.phone.value, linkedin: f.linkedin.value, bio: f.bio.value, organisation: f.organisation.value, date_of_birth: dob.value, open_to_work: open.checked ? 1 : 0, accept_dm: dm.checked ? 1 : 0 };
       function saveData() {
         api('me/update', { data: data }).then(function (d) {
           busy(btn, false);
@@ -1040,14 +1088,15 @@
       } else if (!S.user.photo) { busy(btn, false); toast('Please add a profile photo.', 'error'); }
       else { saveData(); }
     } }, h('h2', { text: 'Your profile' }), field('Full name', f.name), field('Headline', f.headline), u.kind === 'partner' ? field('Organisation', f.organisation) : null, field('Phone', f.phone), field('Date of birth', dob, 'Day, month and year. It is never displayed to the public.'), field('LinkedIn', f.linkedin), field('About you', f.bio), field(u.photo ? 'Profile photo' : 'Profile photo (required)', photo, 'JPG, PNG or WEBP up to 8 MB.'),
-      ['member', 'alumni', 'advisor'].indexOf(u.kind) > -1 ? h('label', { class: 'switch', style: 'margin-bottom:14px' }, open, h('span', { text: 'Open to opportunities – let partners see me in the talent list' })) : null, btn,
+      ['member', 'alumni', 'advisor'].indexOf(u.kind) > -1 ? h('label', { class: 'switch', style: 'margin-bottom:14px' }, open, h('span', { text: 'Open to opportunities' })) : null,
+      h('label', { class: 'switch', style: 'margin-bottom:6px' }, dm, h('span', { text: 'Allow private chat' })), h('p', { class: 'help', style: 'margin:0 0 14px', text: 'Turn this off and nobody can start a private chat with you, except Enactus staff.' }), btn,
       h('p', { class: 'muted small', style: 'margin-top:10px', text: 'Your email (' + u.email + ') and phone number are never shown to other people.' })));
     var cur = pwField('pc', 'Current password'), p1 = pwField('pn', 'New password', 'new-password'), pbtn = h('button', { class: 'btn btn-primary', type: 'submit', text: 'Change password' });
     main.appendChild(h('form', { class: 'form-card', onsubmit: function (e) {
       e.preventDefault(); busy(pbtn, true);
       api('auth/password', { data: { current: cur.input.value, password: p1.input.value } }).then(function (d) { busy(pbtn, false); if (d.ok) { toast('Password changed.', 'ok'); cur.input.value = ''; p1.input.value = ''; } else { toast(d.error, 'error'); } });
     } }, h('h2', { text: 'Change password' }), cur.el, p1.el, h('p', { class: 'help', style: 'margin:-6px 0 12px', text: 'At least 10 characters with upper and lower case letters and a number.' }), pbtn));
-    main.appendChild(h('div', { class: 'form-card' }, (u.is_team || u.is_staff) ? h('p', { style: 'margin-bottom:12px' }, h('button', { class: 'btn btn-soft', type: 'button', text: u.is_team ? 'Open the Team hub' : 'Open the staff area (resources, events, opportunities, groups)', onclick: function () { openHub(u.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } })) : null,
+    main.appendChild(h('div', { class: 'form-card' }, (u.is_team || u.is_staff) ? h('p', { style: 'margin-bottom:12px' }, h('button', { class: 'btn btn-soft', type: 'button', text: u.is_team ? 'Open the Team hub' : 'Open staff area', onclick: function () { openHub(u.is_team ? 'p=t_dashboard' : 'p=plus_resources'); } })) : null,
       h('button', { class: 'btn btn-danger', type: 'button', text: 'Sign out', onclick: function () { api('auth/logout', { data: {} }).then(function () { signOutLocal(); }); } })));
   }
 
@@ -1287,12 +1336,88 @@
     load();
   }
 
+  /* ---------------------------------------------------------------- person + team pages (LinkedIn style) */
+  function backBtn() { return h('a', { class: 'pf-back', href: '#/connect', onclick: function (e) { if (history.length > 1) { e.preventDefault(); history.back(); } } }, '← Back'); }
+  function viewPerson(id) {
+    var main = shell('connect', false); id = parseInt(id, 10);
+    main.appendChild(backBtn());
+    var box = h('div'); main.appendChild(box); box.appendChild(h('div', { class: 'spinner' }));
+    api('profile', { params: { id: id } }).then(function (d) {
+      clear(box);
+      if (!d.ok) { box.appendChild(h('div', { class: 'card center' }, h('h2', { text: 'Profile not available' }), h('p', { class: 'muted', text: d.error || 'This profile could not be found.' }))); return; }
+      if (d.redirect_team) { location.replace('#/team/' + d.redirect_team); return; }
+      var p = d.person, self = p.relation === 'self';
+      var acts = h('div', { class: 'pf-actions' });
+      if (self) { acts.appendChild(h('a', { class: 'btn btn-primary', href: '#/me', text: 'Edit profile' })); }
+      else {
+        if (p.relation === 'none') { var cb = h('button', { class: 'btn btn-primary', type: 'button', text: 'Connect' }); cb.addEventListener('click', function () { connectTo(p, cb); }); acts.appendChild(cb); }
+        else if (p.relation === 'sent') acts.appendChild(h('button', { class: 'btn btn-ghost', disabled: true, text: 'Request sent' }));
+        else if (p.relation === 'received') { var ab = h('button', { class: 'btn btn-primary', type: 'button', text: 'Accept request' }); ab.addEventListener('click', function () { busy(ab, true); api('connection/respond', { data: { id: p.connection_id, action: 'accept' } }).then(function (r) { busy(ab, false); if (r.ok) { ab.textContent = 'Connected'; ab.disabled = true; refreshCounts(); } }); }); acts.appendChild(ab); }
+        else acts.appendChild(h('span', { class: 'badge badge-green', text: 'Connected' }));
+        acts.appendChild(h('button', { class: 'btn btn-ghost', type: 'button', text: 'Message', onclick: function () { messageUser(p.id); } }));
+      }
+      if (p.linkedin) acts.appendChild(h('a', { class: 'btn btn-ghost', href: p.linkedin, target: '_blank', rel: 'noopener noreferrer', text: 'LinkedIn' }));
+      if (!self) { var bb = h('button', { class: 'btn btn-quiet', type: 'button', text: 'Block' }); bb.addEventListener('click', function () { if (!confirm('Block ' + p.name + '? Neither of you will be able to message or connect with the other.')) return; busy(bb, true); api('block', { data: { user: p.id, on: 1 } }).then(function (x) { busy(bb, false); if (x.ok) { toast('Blocked.', 'ok'); location.hash = '#/connect'; } else { toast(x.error, 'error'); } }); }); acts.appendChild(bb); }
+      var ti = p.team_info;
+      box.appendChild(h('section', { class: 'pf-card' },
+        h('div', { class: 'pf-cover' }),
+        h('div', { class: 'pf-head' }, h('div', { class: 'pf-photo' }, avatar(p, 'xl')),
+          h('div', { class: 'pf-id' }, h('h1', { text: p.name }), p.headline ? h('p', { class: 'pf-headline', text: p.headline }) : null,
+            h('p', { class: 'pf-meta' }, [p.kind_label, ti ? null : (p.organisation || null)].filter(Boolean).join(' · '), ti ? h('span', null, (p.kind_label ? ' · ' : ''), h('a', { href: '#/team/' + ti.id, text: ti.name })) : null,
+              ' · ', h('strong', { text: String(p.connections || 0) }), ' connection' + (p.connections === 1 ? '' : 's')),
+            p.open_to_work ? h('span', { class: 'badge badge-green', text: 'Open to work' }) : null),
+          acts)));
+      if (p.bio) box.appendChild(h('section', { class: 'pf-sec' }, h('h2', { text: 'About' }), h('p', { class: 'pf-about', text: p.bio })));
+      if (ti) box.appendChild(h('section', { class: 'pf-sec' }, h('h2', { text: 'Team' }), h('a', { class: 'pf-team-row', href: '#/team/' + ti.id }, avatar({ name: ti.name, photo: ti.logo }, 'lg'), h('span', null, h('strong', { text: ti.name }), h('small', { class: 'muted', text: ti.state ? ti.state + ' · Enactus campus team' : 'Enactus campus team' })))));
+      box.appendChild(h('h2', { class: 'sect-h', text: 'Activity' }));
+      if (!d.posts || !d.posts.length) box.appendChild(h('p', { class: 'muted', text: 'No posts yet.' }));
+      else d.posts.forEach(function (it) { box.appendChild(renderItem(it)); });
+    });
+  }
+  function viewTeamPage(id) {
+    var main = shell('connect', false); id = parseInt(id, 10);
+    main.appendChild(backBtn());
+    var box = h('div'); main.appendChild(box); box.appendChild(h('div', { class: 'spinner' }));
+    api('team', { params: { id: id } }).then(function (d) {
+      clear(box);
+      if (!d.ok) { box.appendChild(h('div', { class: 'card center' }, h('h2', { text: 'Team page not available' }), h('p', { class: 'muted', text: d.error || 'This team could not be found.' }))); return; }
+      var t = d.team, est = t.established_on ? new Date(t.established_on + 'T00:00:00').getFullYear() : null;
+      var meta = [t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : '', t.state || '', est ? 'Est. ' + est : ''].filter(Boolean).join(' · ');
+      var acts = h('div', { class: 'pf-actions' });
+      if (t.page_url) acts.appendChild(h('a', { class: 'btn btn-primary', href: t.page_url, target: '_blank', rel: 'noopener noreferrer', text: 'Visit website' }));
+      if (t.rep_id && S.user && S.user.is_staff && t.rep_id !== S.user.id) acts.appendChild(h('button', { class: 'btn btn-ghost', type: 'button', text: 'Message team', onclick: function () { messageUser(t.rep_id); } }));
+      box.appendChild(h('section', { class: 'pf-card' },
+        h('div', { class: 'pf-cover' + (t.cover ? ' has-img' : ''), style: t.cover ? 'background-image:url("' + String(t.cover).replace(/"/g, '%22') + '")' : '' }),
+        h('div', { class: 'pf-head' }, h('div', { class: 'pf-photo pf-logo' }, avatar({ name: t.name, photo: t.logo }, 'xl')),
+          h('div', { class: 'pf-id' }, h('h1', { text: t.name }), h('p', { class: 'pf-meta', text: meta }),
+            h('p', { class: 'pf-meta' }, h('strong', { text: String(t.members) }), ' member' + (t.members === 1 ? '' : 's'), ' · ', h('strong', { text: String(t.projects_count) }), ' project' + (t.projects_count === 1 ? '' : 's'))),
+          acts)));
+      if (t.about) box.appendChild(h('section', { class: 'pf-sec' }, h('h2', { text: 'About' }), h('p', { class: 'pf-about', text: t.about.length > 900 ? t.about.slice(0, 900) + '…' : t.about })));
+      if (t.leaders && t.leaders.length) box.appendChild(h('section', { class: 'pf-sec' }, h('h2', { text: 'Leaders' }), h('div', { class: 'pf-leaders' }, t.leaders.map(function (m) { return h('div', { class: 'pf-leader' }, avatar({ name: m.name, photo: m.photo }, 'lg'), h('strong', { text: m.name }), h('small', { class: 'muted', text: m.position })); }))));
+      if (t.projects && t.projects.length) box.appendChild(h('section', { class: 'pf-sec' }, h('h2', { text: 'Projects' }), h('div', { class: 'pf-projects' }, t.projects.map(function (p) { return h('a', { class: 'pf-project', href: '#/projects/' + p.id }, p.image ? h('img', { src: p.image, alt: '', loading: 'lazy' }) : h('div', { class: 'pf-noimg' }), h('div', null, h('strong', { text: p.title }), p.category ? h('small', { class: 'muted', text: p.category }) : null)); }))));
+      if (t.people && t.people.length) box.appendChild(h('section', { class: 'pf-sec' }, h('h2', { text: 'People on Plus' }), h('div', { class: 'pf-people' }, t.people.map(function (p) { return clickable(h('div', { class: 'row-card' }, avatar(p), h('div', { class: 'who' }, h('strong', { text: p.name }), h('small', { text: p.headline || p.kind_label }))), p); }))));
+    });
+  }
+
+  /* big numbers shrink to fit their stat card instead of spilling over it */
+  function fitStats() {
+    document.querySelectorAll('.stat strong').forEach(function (s) {
+      s.style.fontSize = ''; s.style.whiteSpace = 'nowrap';
+      var size = parseFloat(window.getComputedStyle(s).fontSize) || 24;
+      while (s.scrollWidth > s.clientWidth + 1 && size > 11) { size -= 1; s.style.fontSize = size + 'px'; }
+    });
+  }
+  var fitT = null;
+  function queueFit() { clearTimeout(fitT); fitT = setTimeout(fitStats, 60); }
+  if (window.MutationObserver) { new MutationObserver(queueFit).observe(document.body, { childList: true, subtree: true }); }
+  window.addEventListener('resize', queueFit);
+
   /* ---------------------------------------------------------------- router + start */
   var ROUTES = [
     [/^\/login$/, viewLogin, true], [/^\/forgot$/, viewForgot, true], [/^\/reset\/([a-f0-9]{64})$/, viewReset, true], [/^\/welcome$/, viewWelcome, false],
     [/^\/?$/, function () { viewFeed('all'); }], [/^\/announcements$/, function () { viewFeed('announcements'); }], [/^\/post\/\d+$/, function () { viewFeed('all'); }], [/^\/connect(?:\/(requests|friends))?$/, viewConnect], [/^\/groups$/, function () { location.replace('#/messages'); }], [/^\/groups\/new$/, viewNewGroup], [/^\/groups\/(\d+)$/, viewGroup], [/^\/messages(?:\/(\d+))?$/, viewMessages],
     [/^\/projects$/, viewProjects], [/^\/projects\/(\d+)$/, viewProject], [/^\/jobs$/, viewJobs], [/^\/resources$/, viewResources], [/^\/events$/, viewEvents],
-    [/^\/notifications$/, viewNotifications], [/^\/mail$/, viewMail], [/^\/me$/, viewProfile], [/^\/more$/, viewMore]
+    [/^\/approvals(?:\/(members|roles|projects|posts))?$/, function (tab) { openHub('p=approvals&tab=' + (tab || 'projects')); location.replace('#/'); }], [/^\/u\/(\d+)$/, viewPerson], [/^\/team\/(\d+)$/, viewTeamPage], [/^\/notifications$/, viewNotifications], [/^\/mail$/, viewMail], [/^\/me$/, viewProfile], [/^\/more$/, viewMore]
   ];
   function ensureUser() {
     if (S.user) return Promise.resolve(true);
@@ -1315,6 +1440,7 @@
     });
   }
   document.addEventListener('change', function (e) { var t = e.target; if (t && t.matches && t.matches('.search-row select')) t.classList.toggle('is-set', t.value !== ''); });
+  S.nav = navigate;
   window.addEventListener('hashchange', navigate);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token) refreshCounts(); });
   api('public').then(function (d) {
